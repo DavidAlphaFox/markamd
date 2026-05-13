@@ -1,7 +1,5 @@
 export { Logo, TitleBar, Breadcrumb, StatusBar, type SaveStatus } from "@/components/chrome";
-export { Editor } from "./editor";
-export { Preview } from "./preview";
-export { Splitter } from "./splitter";
+export { Editor, Preview, Splitter } from "@/components/editor";
 export { Sidebar } from "./sidebar";
 export { FileTree } from "./file-tree";
 export { CommandPalette, type Command } from "./command-palette";
