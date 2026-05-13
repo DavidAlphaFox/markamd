@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ensureMarkdownReady, renderMarkdown, useTheme } from "@/lib";
+import inspectUrl from "@/assets/mascot/inspect.png";
 
 type PreviewProps = {
   source: string;
@@ -81,6 +82,26 @@ export function Preview({ source }: PreviewProps) {
     if (!articleRef.current) return;
     return decorateCodeBlocks(articleRef.current);
   }, [html]);
+
+  if (source.trim().length === 0) {
+    return (
+      <div className="mdv-preview" data-theme={theme}>
+        <div className="mdv-preview__empty">
+          <img
+            src={inspectUrl}
+            alt=""
+            aria-hidden
+            width={120}
+            height={120}
+            draggable={false}
+            className="mdv-preview__empty-art"
+          />
+          <span className="mdv-preview__empty-title">nothing to preview</span>
+          <span className="mdv-preview__empty-hint">start typing on the left</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mdv-preview" data-theme={theme}>

@@ -196,8 +196,7 @@
 }
 
 .mdv-tree__loading,
-.mdv-tree__empty,
-.mdv-tree__error {
+.mdv-tree__empty {
   padding: 8px 14px;
   color: var(--muted);
   font-size: 11px;
@@ -205,5 +204,17 @@
 }
 
 .mdv-tree__error {
-  color: color-mix(in srgb, var(--accent) 60%, var(--fg));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 16px;
+  color: var(--muted);
+  font-size: 12px;
+  font-family: var(--font-mono);
+  text-align: center;
+}
+
+.mdv-tree__error-art {
+  opacity: 0.9;
 }

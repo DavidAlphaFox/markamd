@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef } from "react";
-import { FolderOpen, FolderPlus } from "lucide-react";
+import { FolderOpen } from "lucide-react";
 import { Button, Icon } from "@/components/primitives";
 import { basename } from "@/lib";
+import emptyTowerUrl from "@/assets/mascot/empty-m.png";
 import { FileTree } from "./file-tree";
 
 type SidebarProps = {
@@ -94,7 +95,15 @@ export function Sidebar({
             <FileTree rootPath={rootPath} activePath={activePath} onSelect={onSelectFile} />
           ) : (
             <button type="button" className="mdv-sidebar__empty" onClick={onOpenFolder}>
-              <Icon icon={FolderPlus} size={20} strokeWidth={1.5} />
+              <img
+                src={emptyTowerUrl}
+                alt=""
+                aria-hidden
+                width={72}
+                height={68}
+                draggable={false}
+                className="mdv-sidebar__empty-art"
+              />
               <span>open a folder</span>
               <span className="mdv-sidebar__hint">browse your markdown notes</span>
             </button>

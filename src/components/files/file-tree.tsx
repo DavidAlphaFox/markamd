@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ChevronRight, FileText, Folder, FolderOpen } from "lucide-react";
 import { Icon } from "@/components/primitives";
 import { listFolder, type FileEntry } from "@/lib";
+import sadUrl from "@/assets/mascot/sad.png";
 
 type FileTreeProps = {
   rootPath: string;
@@ -33,7 +34,12 @@ export function FileTree({ rootPath, activePath, onSelect, depth = 0 }: FileTree
   }, [rootPath]);
 
   if (error) {
-    return <div className="mdv-tree__error">cannot read folder</div>;
+    return (
+      <div className="mdv-tree__error">
+        <img src={sadUrl} alt="" aria-hidden width={56} height={56} className="mdv-tree__error-art" />
+        <span>cannot read folder</span>
+      </div>
+    );
   }
   if (!entries) {
     return <div className="mdv-tree__loading">loading…</div>;
