@@ -72,6 +72,24 @@ export function App() {
     setWelcomeOpen(true);
   }, []);
 
+  const exportToPdf = useCallback(() => {
+    // macOS print dialog has "Save as PDF" built in;
+    // print stylesheet hides chrome and shows only .mdv-prose
+    document.body.classList.add("mdv-print");
+    window.print();
+    window.setTimeout(() => document.body.classList.remove("mdv-print"), 600);
+  }, []);
+
+  const toggleFullscreen = useCallback(async () => {
+    const win = getCurrentWindow();
+    try {
+      const isFs = await win.isFullscreen();
+      await win.setFullscreen(!isFs);
+    } catch (err) {
+      console.error("marka.md: fullscreen toggle failed", err);
+    }
+  }, []);
+
   const [selectedPathsArray, setSelectedPathsArray] = usePersistedState<string[]>(
     STORAGE_KEYS.selectedPaths,
     [],
@@ -278,6 +296,14 @@ export function App() {
         e.preventDefault();
         void copyBundle();
       },
+      "mod+p": (e: KeyboardEvent) => {
+        e.preventDefault();
+        exportToPdf();
+      },
+      "mod+ctrl+f": (e: KeyboardEvent) => {
+        e.preventDefault();
+        void toggleFullscreen();
+      },
     }),
     [
       sidebarOpen,
@@ -290,6 +316,8 @@ export function App() {
       handleNewFile,
       setSidebarOpen,
       copyBundle,
+      exportToPdf,
+      toggleFullscreen,
     ],
   );
   useShortcuts(shortcuts);
@@ -310,6 +338,8 @@ export function App() {
         showWelcome,
         copyBundle,
         clearSelection,
+        exportToPdf,
+        toggleFullscreen,
         hasActivePath: activePath != null,
         sidebarOpen,
         selectedCount: selectedPathsArray.length,

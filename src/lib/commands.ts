@@ -3,9 +3,11 @@ import {
   CircleHelp,
   Copy,
   FilePlus2,
+  FileDown,
   FolderOpen,
   FolderPlus,
   Leaf,
+  Maximize2,
   Monitor,
   Moon,
   PanelLeftClose,
@@ -37,6 +39,8 @@ export type CommandActions = {
   showWelcome: () => void;
   copyBundle: () => void | Promise<void>;
   clearSelection: () => void;
+  exportToPdf: () => void;
+  toggleFullscreen: () => void | Promise<void>;
   hasActivePath: boolean;
   sidebarOpen: boolean;
   selectedCount: number;
@@ -132,6 +136,22 @@ export function buildCommands(actions: CommandActions): Command[] {
       hint: `${actions.selectedCount} selected`,
       icon: SquareDashed,
       action: actions.clearSelection,
+    },
+    {
+      id: "export-pdf",
+      label: "export to pdf",
+      hint: "opens the macOS print dialog · choose 'save as pdf'",
+      shortcut: "⌘P",
+      icon: FileDown,
+      action: actions.exportToPdf,
+    },
+    {
+      id: "fullscreen",
+      label: "toggle fullscreen",
+      hint: "native macOS fullscreen",
+      shortcut: "⌃⌘F",
+      icon: Maximize2,
+      action: actions.toggleFullscreen,
     },
     {
       id: "help",

@@ -77,3 +77,39 @@ button:focus-visible {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--muted);
 }
+
+/* print-to-pdf — hide chrome, show only rendered preview */
+@media print {
+  .mdv-titlebar,
+  .mdv-breadcrumb,
+  .mdv-statusbar,
+  .mdv-sidebar,
+  .mdv-splitter__handle,
+  .mdv-splitter__pane:first-child,
+  .mdv-toast,
+  .mdv-overlay,
+  .mdv-overlay__backdrop,
+  .mdv-drop {
+    display: none !important;
+  }
+  body,
+  .mdv-app,
+  .mdv-shell,
+  .mdv-splitter,
+  .mdv-splitter__pane:last-child,
+  .mdv-preview {
+    display: block !important;
+    height: auto !important;
+    width: 100% !important;
+    overflow: visible !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .mdv-prose {
+    max-width: 100% !important;
+    color: #000 !important;
+  }
+  .mdv-prose a {
+    color: #0a4d8c !important;
+  }
+}
