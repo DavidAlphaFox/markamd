@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { Button, Icon, Overlay } from "@/components/primitives";
+import { Button, Icon, Kbd, Overlay } from "@/components/primitives";
 
 type HelpOverlayProps = {
   open: boolean;
@@ -51,9 +51,7 @@ export function HelpOverlay({ open, onClose }: HelpOverlayProps) {
               <li key={s.label} className="mdv-help__row">
                 <span className="mdv-help__keys">
                   {s.keys.map((k, i) => (
-                    <kbd key={`${s.label}-${i}`} className="mdv-help__kbd">
-                      {k}
-                    </kbd>
+                    <Kbd key={`${s.label}-${i}`}>{k}</Kbd>
                   ))}
                 </span>
                 <span className="mdv-help__label">{s.label}</span>

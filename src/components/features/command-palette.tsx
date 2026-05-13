@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { LucideIcon } from "lucide-react";
-import { Icon, Overlay } from "@/components/primitives";
+import { Icon, Kbd, Overlay } from "@/components/primitives";
 
 export type Command = {
   id: string;
@@ -110,15 +110,15 @@ export function CommandPalette({ open, onClose, commands }: CommandPaletteProps)
                 {cmd.label}
                 {cmd.hint ? <span className="mdv-palette__hint"> · {cmd.hint}</span> : null}
               </span>
-              {cmd.shortcut ? <kbd className="mdv-palette__kbd">{cmd.shortcut}</kbd> : null}
+              {cmd.shortcut ? <Kbd className="mdv-kbd--muted">{cmd.shortcut}</Kbd> : null}
             </li>
           ))
         )}
       </ul>
       <div className="mdv-palette__footer">
-        <span><kbd>↑</kbd> <kbd>↓</kbd> navigate</span>
-        <span><kbd>↵</kbd> run</span>
-        <span><kbd>esc</kbd> close</span>
+        <span><Kbd>↑</Kbd> <Kbd>↓</Kbd> navigate</span>
+        <span><Kbd>↵</Kbd> run</span>
+        <span><Kbd>esc</Kbd> close</span>
       </div>
     </Overlay>
   );

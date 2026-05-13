@@ -68,18 +68,6 @@
   min-width: 96px;
 }
 
-.mdv-help__kbd {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  color: var(--fg);
-  padding: 2px 6px;
-  border-radius: var(--radius-sm);
-  background: var(--bg);
-  border: 1px solid var(--border);
-  min-width: 18px;
-  text-align: center;
-}
-
 .mdv-help__label {
   color: var(--muted);
 }
