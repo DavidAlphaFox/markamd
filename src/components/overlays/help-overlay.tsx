@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
 import { Button, Icon, Kbd, Overlay } from "@/components/primitives";
+import writeUrl from "@/assets/mascot/write.png";
 
 type HelpOverlayProps = {
   open: boolean;
@@ -32,7 +33,16 @@ export function HelpOverlay({ open, onClose }: HelpOverlayProps) {
     <Overlay open={open} onClose={onClose} ariaLabel="how to use mdview" variant="modal">
       <header className="mdv-help__header">
         <div className="mdv-help__title">
-          <span className="mdv-help__brand">mdview</span>
+          <img
+            src={writeUrl}
+            alt=""
+            aria-hidden
+            width={36}
+            height={36}
+            draggable={false}
+            className="mdv-help__art"
+          />
+          <span className="mdv-help__brand">marka.md</span>
           <span className="mdv-help__subtitle">how to use</span>
         </div>
         <Button
@@ -71,7 +81,7 @@ export function HelpOverlay({ open, onClose }: HelpOverlayProps) {
       </div>
 
       <footer className="mdv-help__footer">
-        <span>open source · MIT · github.com/mattenarle10/mdview</span>
+        <span>marka.md · open source · MIT · github.com/mattenarle10/mdview</span>
       </footer>
     </Overlay>
   );

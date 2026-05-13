@@ -9,6 +9,7 @@ import {
   Splitter,
   StatusBar,
   TitleBar,
+  WelcomeOverlay,
   type SaveStatus,
 } from "@/components/features";
 import { useDebouncedValue, usePersistedState, useShortcuts } from "@/hooks";
@@ -48,6 +49,13 @@ export function App() {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [welcomed, setWelcomed] = usePersistedState<boolean>(STORAGE_KEYS.welcomed, false);
+  const [welcomeOpen, setWelcomeOpen] = useState(!welcomed);
+
+  const dismissWelcome = useCallback(() => {
+    setWelcomeOpen(false);
+    setWelcomed(true);
+  }, [setWelcomed]);
 
   const debouncedPreview = useDebouncedValue(source, 50);
 
@@ -249,6 +257,12 @@ export function App() {
       />
 
       <HelpOverlay open={helpOpen} onClose={() => setHelpOpen(false)} />
+
+      <WelcomeOverlay
+        open={welcomeOpen}
+        onClose={dismissWelcome}
+        onOpenFolder={handleOpenFolder}
+      />
 
       <StatusBar
         fileName={displayName}

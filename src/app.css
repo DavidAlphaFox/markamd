@@ -9,6 +9,7 @@
 @import "./styles/overlays/overlay.css";
 @import "./styles/overlays/palette.css";
 @import "./styles/overlays/help.css";
+@import "./styles/overlays/welcome.css";
 
 /* shell layout */
 .mdv-app {

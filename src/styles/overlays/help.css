@@ -8,8 +8,12 @@
 
 .mdv-help__title {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 10px;
+}
+
+.mdv-help__art {
+  filter: drop-shadow(0 2px 6px color-mix(in srgb, var(--accent) 22%, transparent));
 }
 
 .mdv-help__brand {

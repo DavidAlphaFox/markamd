@@ -64,7 +64,7 @@ export function TitleBar({
           <span data-tauri-drag-region style={{ display: "inline-flex", pointerEvents: "none" }}>
             <Logo size={20} />
           </span>
-          <span className="mdv-titlebar__name" data-tauri-drag-region>mdview</span>
+          <span className="mdv-titlebar__name" data-tauri-drag-region>marka.md</span>
         </div>
         {fileName ? (
           <div className="mdv-titlebar__doc" data-tauri-drag-region>
