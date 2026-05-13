@@ -36,7 +36,13 @@
   font-size: 13px;
   color: var(--fg);
   cursor: pointer;
-  transition: background var(--dur-fast) var(--easing);
+  transition:
+    background var(--dur-fast) var(--easing),
+    transform var(--dur-fast) var(--easing);
+}
+
+.mdv-palette__item.is-active {
+  transform: translateX(2px);
 }
 
 .mdv-palette__item.is-active {

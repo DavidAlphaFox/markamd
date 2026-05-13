@@ -30,6 +30,18 @@
   align-items: center;
   gap: 4px;
   min-width: 0;
+  animation: mdv-fade-in-slide 220ms var(--easing);
+}
+
+@keyframes mdv-fade-in-slide {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .mdv-breadcrumb__seg {

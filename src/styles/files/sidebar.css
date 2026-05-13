@@ -212,6 +212,19 @@
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
+  animation: mdv-check-pop 240ms var(--easing);
+}
+
+@keyframes mdv-check-pop {
+  0% {
+    transform: scale(0.7);
+  }
+  55% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .mdv-tree__check:hover {
@@ -221,6 +234,12 @@
 .mdv-tree__row.is-active {
   background: color-mix(in srgb, var(--accent) 14%, transparent);
   color: var(--accent);
+  animation: mdv-row-pulse 360ms var(--easing);
+}
+
+@keyframes mdv-row-pulse {
+  0% { background: color-mix(in srgb, var(--accent) 32%, transparent); }
+  100% { background: color-mix(in srgb, var(--accent) 14%, transparent); }
 }
 
 .mdv-tree__row.is-active::before {

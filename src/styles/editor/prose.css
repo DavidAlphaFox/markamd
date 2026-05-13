@@ -208,9 +208,24 @@
   white-space: pre;
 }
 
+.mdv-mermaid.is-rendered {
+  animation: mdv-diagram-in 360ms var(--easing);
+}
+
 .mdv-mermaid.is-rendered svg {
   max-width: 100%;
   height: auto;
+}
+
+@keyframes mdv-diagram-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .mdv-mermaid.is-error {

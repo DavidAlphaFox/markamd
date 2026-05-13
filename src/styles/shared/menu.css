@@ -10,7 +10,12 @@
   color: var(--muted);
   transition:
     background var(--dur-fast) var(--easing),
-    color var(--dur-fast) var(--easing);
+    color var(--dur-fast) var(--easing),
+    transform 80ms var(--easing);
+}
+
+.mdv-btn:active {
+  transform: scale(0.94);
 }
 
 .mdv-btn--ghost:hover {
