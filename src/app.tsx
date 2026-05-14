@@ -15,13 +15,7 @@ import {
   type SaveStatus,
 } from "@/components/features";
 import { TooltipRoot } from "@/components/primitives";
-import {
-  useDebouncedValue,
-  useGlobalScrollFlag,
-  usePersistedState,
-  useShortcuts,
-  useSyncScroll,
-} from "@/hooks";
+import { useDebouncedValue, usePersistedState, useShortcuts, useSyncScroll } from "@/hooks";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { listen } from "@tauri-apps/api/event";
 import { openPath } from "@tauri-apps/plugin-opener";
@@ -130,8 +124,6 @@ export function App() {
 
   // proportional editor <-> preview scroll sync; rebinds when active file changes
   useSyncScroll({ rebindKey: activePath ?? "untitled" });
-  // app-wide auto-hide scrollbars — one listener flags is-scrolling on the scrolled element
-  useGlobalScrollFlag();
 
   const { words, minutes, docTokens } = useMemo(() => {
     const trimmed = source.trim();
@@ -419,19 +411,27 @@ export function App() {
       />
 
       <main className="mdv-shell">
-        <Sidebar
-          open={sidebarOpen}
-          rootPath={rootPath}
-          activePath={activePath}
-          width={sidebarWidth}
-          onWidthChange={setSidebarWidth}
-          onOpenFolder={handleOpenFolder}
-          onSelectFile={(path) => void loadFile(path)}
-        />
-        <Splitter
-          left={<Editor value={source} onChange={setSource} />}
-          right={<Preview source={debouncedPreview} />}
-        />
+        {readingMode ? (
+          <div className="mdv-reading">
+            <Preview source={debouncedPreview} />
+          </div>
+        ) : (
+          <>
+            <Sidebar
+              open={sidebarOpen}
+              rootPath={rootPath}
+              activePath={activePath}
+              width={sidebarWidth}
+              onWidthChange={setSidebarWidth}
+              onOpenFolder={handleOpenFolder}
+              onSelectFile={(path) => void loadFile(path)}
+            />
+            <Splitter
+              left={<Editor value={source} onChange={setSource} />}
+              right={<Preview source={debouncedPreview} />}
+            />
+          </>
+        )}
       </main>
 
       <Toast
