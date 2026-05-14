@@ -571,6 +571,7 @@ export function App() {
     >
       <TitleBar
         fileName={displayName}
+        filePath={activePath}
         dirty={dirty}
         readingMode={readingMode}
         onToggleReading={toggleReadingMode}

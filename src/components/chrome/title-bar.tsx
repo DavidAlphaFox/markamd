@@ -17,6 +17,8 @@ import { useThemeMode, useTransparency, type ThemeMode } from "@/lib";
 
 type TitleBarProps = {
   fileName?: string;
+  /** full path of the active file — shown on hover over the centered filename */
+  filePath?: string | null;
   dirty?: boolean;
   readingMode?: boolean;
   onToggleReading?: () => void;
@@ -39,6 +41,7 @@ const THEME_CHOICES: ThemeChoice[] = [
 
 export function TitleBar({
   fileName,
+  filePath,
   dirty = false,
   readingMode = false,
   onToggleReading,
@@ -68,7 +71,11 @@ export function TitleBar({
 
       <div className="mdv-titlebar__center" data-tauri-drag-region>
         {fileName ? (
-          <span className="mdv-titlebar__filename" data-tauri-drag-region>
+          <span
+            className="mdv-titlebar__filename"
+            data-tauri-drag-region
+            title={filePath ?? fileName}
+          >
             {fileName}
             {dirty ? <span className="mdv-titlebar__dot" aria-label="unsaved changes" data-tauri-drag-region /> : null}
           </span>
