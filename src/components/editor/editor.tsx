@@ -3,6 +3,7 @@ import { EditorState } from "@codemirror/state";
 import { EditorView, keymap, lineNumbers, highlightActiveLine, drawSelection } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
 import { HighlightStyle, syntaxHighlighting, bracketMatching } from "@codemirror/language";
+import { search, searchKeymap } from "@codemirror/search";
 import { markdown } from "@codemirror/lang-markdown";
 import { tags as t } from "@lezer/highlight";
 
@@ -101,7 +102,8 @@ export function Editor({ value, onChange }: EditorProps) {
         syntaxHighlighting(mdHighlight, { fallback: true }),
         markdown(),
         EditorView.lineWrapping,
-        keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
+        search({ top: true }),
+        keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap, indentWithTab]),
         buildTheme(),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {

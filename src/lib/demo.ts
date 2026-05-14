@@ -88,6 +88,7 @@ flip on **transparency** in the theme menu for the macOS blur look.
 | ⌘. | reading mode |
 | ⌘⇧C | copy markdown to clipboard |
 | ⌘P | export to pdf |
+| ⌘F | find / replace in editor |
 | ⌘/ | this help (in the status bar) |
 | esc | close any popup |
 
