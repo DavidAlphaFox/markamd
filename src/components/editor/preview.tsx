@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ensureMarkdownReady, renderMarkdown, useTheme } from "@/lib";
-import { useScrollFlag } from "@/hooks";
 import inspectUrl from "@/assets/mascot/inspect.png";
 
 let mermaidLib: typeof import("mermaid")["default"] | null = null;
@@ -147,11 +146,9 @@ export function Preview({ source }: PreviewProps) {
     void renderMermaidBlocks(articleRef.current, mermaidTheme);
   }, [html, theme]);
 
-  const scrollRef = useScrollFlag<HTMLDivElement>();
-
   if (source.trim().length === 0) {
     return (
-      <div ref={scrollRef} className="mdv-preview mdv-scroll" data-theme={theme}>
+      <div className="mdv-preview" data-theme={theme}>
         <div className="mdv-preview__empty">
           <img
             src={inspectUrl}
@@ -170,7 +167,7 @@ export function Preview({ source }: PreviewProps) {
   }
 
   return (
-    <div ref={scrollRef} className="mdv-preview mdv-scroll" data-theme={theme}>
+    <div className="mdv-preview" data-theme={theme}>
       <article
         ref={articleRef}
         className="mdv-prose"

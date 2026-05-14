@@ -59,6 +59,9 @@ button:focus-visible {
   border-radius: var(--radius-sm);
 }
 
+/* macOS-style auto-hide scrollbars, app-wide.
+   Driven by useGlobalScrollFlag — one listener flags `.is-scrolling`
+   on whichever element fires a scroll, then clears it after idle. */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -69,26 +72,18 @@ button:focus-visible {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
+  background: transparent;
   border-radius: 999px;
   border: 2px solid var(--bg);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--muted);
-}
-
-/* opt-in macOS-style auto-hide: thumb stays invisible until hover/focus/scroll */
-.mdv-scroll::-webkit-scrollbar-thumb {
-  background: transparent;
   transition: background 220ms var(--easing);
 }
 
-.mdv-scroll.is-scrolling::-webkit-scrollbar-thumb {
+.is-scrolling::-webkit-scrollbar-thumb {
   background: color-mix(in srgb, var(--muted) 55%, transparent);
 }
 
-.mdv-scroll.is-scrolling::-webkit-scrollbar-thumb:hover {
+.is-scrolling::-webkit-scrollbar-thumb:hover,
+::-webkit-scrollbar-thumb:hover {
   background: var(--muted);
 }
 
