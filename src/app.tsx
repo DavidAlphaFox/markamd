@@ -14,7 +14,7 @@ import {
   WelcomeOverlay,
   type SaveStatus,
 } from "@/components/features";
-import { useDebouncedValue, usePersistedState, useShortcuts } from "@/hooks";
+import { useDebouncedValue, usePersistedState, useShortcuts, useSyncScroll } from "@/hooks";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { listen } from "@tauri-apps/api/event";
 import { openPath } from "@tauri-apps/plugin-opener";
@@ -167,6 +167,9 @@ export function App() {
   }, [selectedPathsArray, rootPath]);
 
   const debouncedPreview = useDebouncedValue(source, 50);
+
+  // proportional editor <-> preview scroll sync; rebinds when active file changes
+  useSyncScroll({ rebindKey: activePath ?? "untitled" });
 
   const { words, minutes } = useMemo(() => {
     const trimmed = source.trim();
