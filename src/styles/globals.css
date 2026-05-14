@@ -59,33 +59,20 @@ button:focus-visible {
   border-radius: var(--radius-sm);
 }
 
-/* macOS-style auto-hide scrollbars, app-wide.
-   Driven by useGlobalScrollFlag — one listener flags `.is-scrolling`
-   on whichever element fires a scroll, then clears it after idle. */
+/* hide scrollbars entirely — content still scrolls, just no visible bar */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 0;
+  height: 0;
+  display: none;
 }
 
-::-webkit-scrollbar-track {
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-thumb {
   background: transparent;
 }
 
-::-webkit-scrollbar-thumb {
-  background-color: var(--muted);
-  background-clip: padding-box;
-  border: 2px solid transparent;
-  border-radius: 999px;
-  opacity: 0;
-  transition: opacity 200ms var(--easing);
-}
-
-.is-scrolling::-webkit-scrollbar-thumb {
-  opacity: 0.7;
-}
-
-.is-scrolling::-webkit-scrollbar-thumb:hover {
-  opacity: 1;
+* {
+  scrollbar-width: none;
 }
 
 /* global tooltip — rendered absolutely by <TooltipRoot/>, triggered by [data-tooltip] */
