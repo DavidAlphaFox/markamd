@@ -47,12 +47,16 @@ jobs:
       - name: install dependencies
         run: bun install
 
-      - name: import apple cert (if signing secrets present)
+      - name: import apple cert + propagate signing env (if secrets present)
         if: env.HAS_APPLE_CERT == 'true'
         env:
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           echo "$APPLE_CERTIFICATE" | base64 --decode > /tmp/cert.p12
           security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
@@ -62,16 +66,26 @@ jobs:
           security import /tmp/cert.p12 -k build.keychain -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
           rm /tmp/cert.p12
+          # propagate the signing env to later steps so tauri-action can read it.
+          # this step is skipped when HAS_APPLE_CERT=false → these vars are never
+          # written → tauri-action's env contains no APPLE_* → Tauri auto-skips
+          # signing instead of running `codesign --sign ""` and failing.
+          {
+            echo "APPLE_SIGNING_IDENTITY=$APPLE_SIGNING_IDENTITY"
+            echo "APPLE_ID=$APPLE_ID"
+            echo "APPLE_PASSWORD=$APPLE_PASSWORD"
+            echo "APPLE_TEAM_ID=$APPLE_TEAM_ID"
+          } >> "$GITHUB_ENV"
 
       - name: build + release dmg
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # signing + notarization (auto-skipped if secrets absent)
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # signing env (APPLE_SIGNING_IDENTITY / APPLE_ID / APPLE_PASSWORD /
+          # APPLE_TEAM_ID) is injected via $GITHUB_ENV by the cert-import step
+          # above ONLY when secrets are present. when secrets are absent, the
+          # cert step is skipped and none of those vars exist here → Tauri
+          # skips signing entirely (rather than trying with identity "").
         with:
           tagName: ${{ github.ref_name }}
           releaseName: "marka.md ${{ github.ref_name }}"
