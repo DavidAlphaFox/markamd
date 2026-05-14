@@ -81,11 +81,20 @@ export function App() {
   }, [setSidebarOpen]);
 
   const exportToPdf = useCallback(() => {
-    // macOS print dialog has "Save as PDF" built in;
-    // print stylesheet hides chrome and shows only .mdv-prose
+    // macOS print dialog has "Save as PDF" built in. WKWebView snapshots the
+    // live DOM (not @media print), so we apply `.mdv-print` to body first,
+    // wait two frames so the new layout is painted, then call window.print()
+    // (which blocks until the user dismisses the dialog). Class removed after.
     document.body.classList.add("mdv-print");
-    window.print();
-    window.setTimeout(() => document.body.classList.remove("mdv-print"), 600);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        try {
+          window.print();
+        } finally {
+          document.body.classList.remove("mdv-print");
+        }
+      });
+    });
   }, []);
 
   const toggleFullscreen = useCallback(async () => {

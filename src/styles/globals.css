@@ -133,38 +133,54 @@ button:focus-visible {
   background: color-mix(in srgb, var(--accent) 32%, transparent) !important;
 }
 
-/* print-to-pdf — hide chrome, show only rendered preview */
+/* print-to-pdf — body.mdv-print is added before window.print() so the
+   on-screen DOM is reshaped *before* the webview snapshots for the print
+   dialog. WKWebView often renders the live screen layout (not @media print)
+   into the PDF, so the class-based variant is the reliable path. The
+   @media print block stays as a belt-and-suspenders for stock browsers. */
+body.mdv-print .mdv-titlebar,
+body.mdv-print .mdv-breadcrumb,
+body.mdv-print .mdv-statusbar,
+body.mdv-print .mdv-sidebar,
+body.mdv-print .mdv-splitter__handle,
+body.mdv-print .mdv-splitter__pane:first-child,
+body.mdv-print .mdv-toast,
+body.mdv-print .mdv-overlay,
+body.mdv-print .mdv-overlay__backdrop,
+body.mdv-print .mdv-drop,
+body.mdv-print .mdv-tooltip,
+body.mdv-print .mdv-popover {
+  display: none !important;
+}
+
+body.mdv-print,
+body.mdv-print .mdv-app,
+body.mdv-print .mdv-shell,
+body.mdv-print .mdv-splitter,
+body.mdv-print .mdv-splitter__pane:last-child,
+body.mdv-print .mdv-preview {
+  display: block !important;
+  height: auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: visible !important;
+  background: #ffffff !important;
+  color: #000000 !important;
+  padding: 0 !important;
+}
+
+body.mdv-print .mdv-prose {
+  max-width: 100% !important;
+  padding: 24px 32px !important;
+  color: #000000 !important;
+  background: #ffffff !important;
+}
+
+body.mdv-print .mdv-prose a {
+  color: #0a4d8c !important;
+}
+
 @media print {
-  .mdv-titlebar,
-  .mdv-breadcrumb,
-  .mdv-statusbar,
-  .mdv-sidebar,
-  .mdv-splitter__handle,
-  .mdv-splitter__pane:first-child,
-  .mdv-toast,
-  .mdv-overlay,
-  .mdv-overlay__backdrop,
-  .mdv-drop {
-    display: none !important;
-  }
-  body,
-  .mdv-app,
-  .mdv-shell,
-  .mdv-splitter,
-  .mdv-splitter__pane:last-child,
-  .mdv-preview {
-    display: block !important;
-    height: auto !important;
-    width: 100% !important;
-    overflow: visible !important;
-    background: #fff !important;
-    color: #000 !important;
-  }
-  .mdv-prose {
-    max-width: 100% !important;
-    color: #000 !important;
-  }
-  .mdv-prose a {
-    color: #0a4d8c !important;
-  }
+  @page { margin: 16mm; }
+  body { background: #fff !important; }
 }
