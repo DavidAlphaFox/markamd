@@ -176,9 +176,21 @@ export function WelcomeOverlay({ open, onClose, onOpenFolder }: WelcomeOverlayPr
         </div>
 
         <div className="mdv-welcome__hint">
-          <Kbd>↵</Kbd> <span>or</span> <Kbd>→</Kbd> <span>next</span>
-          <span className="mdv-welcome__hint-sep">·</span>
-          <Kbd>esc</Kbd> <span>close</span>
+          {isLast ? (
+            <>
+              <Kbd>⌘</Kbd><Kbd>⇧</Kbd><Kbd>O</Kbd> <span>open a folder</span>
+              <span className="mdv-welcome__hint-sep">·</span>
+              <Kbd>↵</Kbd> <span>or click</span>
+              <span className="mdv-welcome__hint-sep">·</span>
+              <Kbd>esc</Kbd> <span>close</span>
+            </>
+          ) : (
+            <>
+              <Kbd>↵</Kbd> <span>or</span> <Kbd>→</Kbd> <span>next</span>
+              <span className="mdv-welcome__hint-sep">·</span>
+              <Kbd>esc</Kbd> <span>close</span>
+            </>
+          )}
         </div>
       </div>
     </Overlay>
