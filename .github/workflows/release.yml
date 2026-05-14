@@ -12,6 +12,13 @@ jobs:
   build:
     runs-on: macos-latest
     timeout-minutes: 30
+    # job-level env so `if: env.APPLE_CERTIFICATE != ''` can read it at
+    # step-condition evaluation time. step-level env wouldn't work — the
+    # `if:` is evaluated *before* the step's env block is applied.
+    env:
+      APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+      APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
     steps:
       - name: checkout
         uses: actions/checkout@v4
@@ -42,10 +49,6 @@ jobs:
 
       - name: import apple cert (if signing secrets present)
         if: env.APPLE_CERTIFICATE != ''
-        env:
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
           echo "$APPLE_CERTIFICATE" | base64 --decode > /tmp/cert.p12
           security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
@@ -75,7 +78,13 @@ jobs:
 
             1. download the `.dmg` below
             2. open it, drag the app to Applications
-            3. **right-click the app → Open** (one-time gatekeeper bypass for unsigned indie builds)
+            3. if macOS says "marka.md is damaged", run once in Terminal:
+
+            ```bash
+            xattr -rd com.apple.quarantine /Applications/marka.md.app
+            ```
+
+            (one-time quarantine bypass for unsigned indie builds — fixes when v1.0 ships notarized.)
 
             full changelog: https://github.com/mattenarle10/markamd/compare/v0.1.0...${{ github.ref_name }}
           releaseDraft: false
