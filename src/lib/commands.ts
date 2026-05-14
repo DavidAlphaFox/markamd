@@ -23,12 +23,15 @@ import {
 import { basename, dirname } from "./files";
 import { setThemeMode, setTransparency, type ThemeMode } from "./theme";
 
+export type CommandCategory = "recent" | "file" | "view" | "edit" | "share" | "theme" | "help";
+
 export type Command = {
   id: string;
   label: string;
   hint?: string;
   shortcut?: string;
   icon?: LucideIcon;
+  category?: CommandCategory;
   action: () => void | Promise<void>;
 };
 
@@ -43,6 +46,7 @@ export type CommandActions = {
   showHelp: () => void;
   showWelcome: () => void;
   showAbout: () => void;
+  loadDemo: () => void;
   copyMarkdown: () => void | Promise<void>;
   exportToPdf: () => void;
   toggleFullscreen: () => void | Promise<void>;
@@ -62,6 +66,26 @@ const THEME_COMMANDS: Array<{ mode: ThemeMode; label: string; hint: string; icon
   { mode: "mocha", label: "theme: mocha", hint: "catppuccin deepest dark", icon: Moon },
 ];
 
+export const CATEGORY_ORDER: CommandCategory[] = [
+  "recent",
+  "file",
+  "view",
+  "edit",
+  "share",
+  "theme",
+  "help",
+];
+
+export const CATEGORY_LABELS: Record<CommandCategory, string> = {
+  recent: "recent",
+  file: "file",
+  view: "view",
+  edit: "edit",
+  share: "share",
+  theme: "theme",
+  help: "help",
+};
+
 export function buildCommands(actions: CommandActions): Command[] {
   const recent = actions.recentFiles.slice(0, 5).map(
     (path): Command => ({
@@ -69,6 +93,7 @@ export function buildCommands(actions: CommandActions): Command[] {
       label: basename(path),
       hint: `recent · ${dirname(path)}`,
       icon: FileText,
+      category: "recent",
       action: () => actions.openRecent(path),
     }),
   );
@@ -81,6 +106,7 @@ export function buildCommands(actions: CommandActions): Command[] {
       hint: "load a folder of notes — turn the sidebar into your context library",
       shortcut: "⌘⇧O",
       icon: FolderPlus,
+      category: "file",
       action: actions.openFolder,
     },
     {
@@ -89,6 +115,7 @@ export function buildCommands(actions: CommandActions): Command[] {
       hint: "pick a single .md from disk",
       shortcut: "⌘O",
       icon: FolderOpen,
+      category: "file",
       action: actions.openFile,
     },
     {
@@ -97,6 +124,7 @@ export function buildCommands(actions: CommandActions): Command[] {
       hint: "start a blank markdown buffer",
       shortcut: "⌘N",
       icon: FilePlus2,
+      category: "file",
       action: actions.newFile,
     },
     {
@@ -105,15 +133,17 @@ export function buildCommands(actions: CommandActions): Command[] {
       hint: actions.hasActivePath ? "write changes to disk" : "no file loaded — open one first",
       shortcut: "⌘S",
       icon: Save,
+      category: "file",
       action: actions.save,
     },
     {
-      id: "copy-markdown",
-      label: "copy markdown to clipboard",
-      hint: "share with claude — paste straight into chat",
-      shortcut: "⌘⇧C",
-      icon: Copy,
-      action: actions.copyMarkdown,
+      id: "toggle-sidebar",
+      label: actions.sidebarOpen ? "hide sidebar" : "show sidebar",
+      hint: "your folder tree + file search",
+      shortcut: "⌘B",
+      icon: actions.sidebarOpen ? PanelLeftClose : PanelLeftOpen,
+      category: "view",
+      action: actions.toggleSidebar,
     },
     {
       id: "toggle-reading",
@@ -123,15 +153,35 @@ export function buildCommands(actions: CommandActions): Command[] {
         : "calm preview-only view — great for proofing before sharing",
       shortcut: "⌘.",
       icon: actions.readingMode ? Minimize2 : BookOpen,
+      category: "view",
       action: actions.toggleReading,
     },
     {
-      id: "toggle-sidebar",
-      label: actions.sidebarOpen ? "hide sidebar" : "show sidebar",
-      hint: "your folder tree + file search",
-      shortcut: "⌘B",
-      icon: actions.sidebarOpen ? PanelLeftClose : PanelLeftOpen,
-      action: actions.toggleSidebar,
+      id: "fullscreen",
+      label: "toggle fullscreen",
+      hint: "native macOS fullscreen",
+      shortcut: "⌃⌘F",
+      icon: Maximize2,
+      category: "view",
+      action: actions.toggleFullscreen,
+    },
+    {
+      id: "copy-markdown",
+      label: "copy markdown to clipboard",
+      hint: "share with claude — paste straight into chat",
+      shortcut: "⌘⇧C",
+      icon: Copy,
+      category: "share",
+      action: actions.copyMarkdown,
+    },
+    {
+      id: "export-pdf",
+      label: "export to pdf",
+      hint: "macOS print dialog → choose 'save as pdf'",
+      shortcut: "⌘P",
+      icon: FileDown,
+      category: "share",
+      action: actions.exportToPdf,
     },
     ...THEME_COMMANDS.map(
       (t): Command => ({
@@ -139,6 +189,7 @@ export function buildCommands(actions: CommandActions): Command[] {
         label: t.label,
         hint: t.hint,
         icon: t.icon,
+        category: "theme",
         action: () => setThemeMode(t.mode),
       }),
     ),
@@ -147,6 +198,7 @@ export function buildCommands(actions: CommandActions): Command[] {
       label: "transparency: on",
       hint: "macOS vibrancy through the window",
       icon: Sparkles,
+      category: "theme",
       action: () => setTransparency(true),
     },
     {
@@ -154,23 +206,8 @@ export function buildCommands(actions: CommandActions): Command[] {
       label: "transparency: off",
       hint: "solid window background",
       icon: Sparkles,
+      category: "theme",
       action: () => setTransparency(false),
-    },
-    {
-      id: "export-pdf",
-      label: "export to pdf",
-      hint: "macOS print dialog → choose 'save as pdf'",
-      shortcut: "⌘P",
-      icon: FileDown,
-      action: actions.exportToPdf,
-    },
-    {
-      id: "fullscreen",
-      label: "toggle fullscreen",
-      hint: "native macOS fullscreen",
-      shortcut: "⌃⌘F",
-      icon: Maximize2,
-      action: actions.toggleFullscreen,
     },
     {
       id: "help",
@@ -178,13 +215,23 @@ export function buildCommands(actions: CommandActions): Command[] {
       hint: "keyboard shortcuts + tips",
       shortcut: "⌘/",
       icon: CircleHelp,
+      category: "help",
       action: actions.showHelp,
+    },
+    {
+      id: "demo",
+      label: "show onboarding doc",
+      hint: "load the original 'welcome to marka.md' markdown into the editor",
+      icon: BookOpen,
+      category: "help",
+      action: actions.loadDemo,
     },
     {
       id: "tutorial",
       label: "show tutorial · welcome",
       hint: "reopen the onboarding modal",
       icon: Sparkles,
+      category: "help",
       action: actions.showWelcome,
     },
     {
@@ -192,6 +239,7 @@ export function buildCommands(actions: CommandActions): Command[] {
       label: "about marka.md",
       hint: "version, license, links",
       icon: Info,
+      category: "help",
       action: actions.showAbout,
     },
   ];

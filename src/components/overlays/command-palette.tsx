@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon, Kbd, Overlay } from "@/components/primitives";
-import type { Command } from "@/lib/commands";
+import { CATEGORY_LABELS, CATEGORY_ORDER, type Command, type CommandCategory } from "@/lib/commands";
 
 export type { Command };
 
@@ -9,6 +9,46 @@ type CommandPaletteProps = {
   onClose: () => void;
   commands: Command[];
 };
+
+type RenderRow =
+  | { kind: "header"; key: string; label: string }
+  | { kind: "item"; key: string; cmd: Command; index: number };
+
+function buildRows(commands: Command[], grouped: boolean): RenderRow[] {
+  if (!grouped) {
+    return commands.map((cmd, i) => ({ kind: "item", key: cmd.id, cmd, index: i }));
+  }
+
+  const byCategory = new Map<CommandCategory | "other", Command[]>();
+  for (const cmd of commands) {
+    const key = cmd.category ?? "other";
+    const bucket = byCategory.get(key);
+    if (bucket) bucket.push(cmd);
+    else byCategory.set(key, [cmd]);
+  }
+
+  const rows: RenderRow[] = [];
+  let index = 0;
+  for (const cat of CATEGORY_ORDER) {
+    const bucket = byCategory.get(cat);
+    if (!bucket || bucket.length === 0) continue;
+    rows.push({ kind: "header", key: `h-${cat}`, label: CATEGORY_LABELS[cat] });
+    for (const cmd of bucket) {
+      rows.push({ kind: "item", key: cmd.id, cmd, index });
+      index += 1;
+    }
+  }
+  // anything without a category falls under "other"
+  const other = byCategory.get("other");
+  if (other && other.length > 0) {
+    rows.push({ kind: "header", key: "h-other", label: "other" });
+    for (const cmd of other) {
+      rows.push({ kind: "item", key: cmd.id, cmd, index });
+      index += 1;
+    }
+  }
+  return rows;
+}
 
 export function CommandPalette({ open, onClose, commands }: CommandPaletteProps) {
   const [query, setQuery] = useState("");
@@ -25,6 +65,13 @@ export function CommandPalette({ open, onClose, commands }: CommandPaletteProps)
     });
   }, [query, commands]);
 
+  const rows = useMemo(
+    () => buildRows(filtered, query.trim().length === 0),
+    [filtered, query],
+  );
+
+  const itemCount = useMemo(() => rows.filter((r) => r.kind === "item").length, [rows]);
+
   useEffect(() => {
     if (open) {
       setQuery("");
@@ -38,7 +85,7 @@ export function CommandPalette({ open, onClose, commands }: CommandPaletteProps)
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        setActiveIndex((i) => Math.min(filtered.length - 1, i + 1));
+        setActiveIndex((i) => Math.min(itemCount - 1, i + 1));
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
         setActiveIndex((i) => Math.max(0, i - 1));
@@ -53,7 +100,7 @@ export function CommandPalette({ open, onClose, commands }: CommandPaletteProps)
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [open, onClose, filtered, activeIndex]);
+  }, [open, onClose, filtered, activeIndex, itemCount]);
 
   useEffect(() => {
     if (!open || !listRef.current) return;
@@ -78,34 +125,44 @@ export function CommandPalette({ open, onClose, commands }: CommandPaletteProps)
         />
       </div>
       <ul className="mdv-palette__list" role="listbox" ref={listRef}>
-        {filtered.length === 0 ? (
+        {rows.length === 0 ? (
           <li className="mdv-palette__empty">no matches</li>
         ) : (
-          filtered.map((cmd, i) => (
-            <li
-              key={cmd.id}
-              data-index={i}
-              className={`mdv-palette__item${i === activeIndex ? " is-active" : ""}`}
-              onClick={() => {
-                onClose();
-                void cmd.action();
-              }}
-              onMouseEnter={() => setActiveIndex(i)}
-              role="option"
-              aria-selected={i === activeIndex}
-            >
-              {cmd.icon ? (
-                <span className="mdv-palette__icon">
-                  <Icon icon={cmd.icon} size={14} strokeWidth={1.5} />
+          rows.map((row) => {
+            if (row.kind === "header") {
+              return (
+                <li key={row.key} className="mdv-palette__group" role="presentation">
+                  {row.label}
+                </li>
+              );
+            }
+            const { cmd, index } = row;
+            return (
+              <li
+                key={row.key}
+                data-index={index}
+                className={`mdv-palette__item${index === activeIndex ? " is-active" : ""}`}
+                onClick={() => {
+                  onClose();
+                  void cmd.action();
+                }}
+                onMouseEnter={() => setActiveIndex(index)}
+                role="option"
+                aria-selected={index === activeIndex}
+              >
+                {cmd.icon ? (
+                  <span className="mdv-palette__icon">
+                    <Icon icon={cmd.icon} size={14} strokeWidth={1.5} />
+                  </span>
+                ) : null}
+                <span className="mdv-palette__label">
+                  {cmd.label}
+                  {cmd.hint ? <span className="mdv-palette__hint"> · {cmd.hint}</span> : null}
                 </span>
-              ) : null}
-              <span className="mdv-palette__label">
-                {cmd.label}
-                {cmd.hint ? <span className="mdv-palette__hint"> · {cmd.hint}</span> : null}
-              </span>
-              {cmd.shortcut ? <Kbd className="mdv-kbd--muted">{cmd.shortcut}</Kbd> : null}
-            </li>
-          ))
+                {cmd.shortcut ? <Kbd className="mdv-kbd--muted">{cmd.shortcut}</Kbd> : null}
+              </li>
+            );
+          })
         )}
       </ul>
       <div className="mdv-palette__footer">

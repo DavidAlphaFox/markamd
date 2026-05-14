@@ -9,7 +9,13 @@
 .mdv-help__title {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+}
+
+.mdv-help__title-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
 
 .mdv-help__art {
@@ -49,13 +55,36 @@
   font-weight: 500;
 }
 
+.mdv-help__groups {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 28px;
+}
+
+.mdv-help__group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mdv-help__group-title {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  opacity: 0.7;
+  padding-bottom: 2px;
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 14%, var(--border));
+}
+
 .mdv-help__list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
 }
 
 .mdv-help__row {

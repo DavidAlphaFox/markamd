@@ -11,20 +11,48 @@ type HelpOverlayProps = {
 
 type Row = { keys: string[]; label: string };
 
-const SHORTCUTS: Row[] = [
-  { keys: ["⌘", "K"], label: "open command palette" },
-  { keys: ["⌘", "⇧", "O"], label: "open a folder of notes" },
-  { keys: ["⌘", "O"], label: "open a single .md file" },
-  { keys: ["⌘", "N"], label: "new untitled buffer" },
-  { keys: ["⌘", "S"], label: "save current file" },
-  { keys: ["⌘", "B"], label: "show / hide sidebar" },
-  { keys: ["⌘", "."], label: "toggle reading mode" },
-  { keys: ["⌘", "⇧", "C"], label: "copy markdown to clipboard" },
-  { keys: ["⌘", "P"], label: "export to pdf" },
-  { keys: ["⌘", "F"], label: "find / replace in editor" },
-  { keys: ["⌘", "G"], label: "find next match" },
-  { keys: ["⌘", "/"], label: "open this help" },
-  { keys: ["esc"], label: "close any popup / overlay" },
+type Group = { title: string; rows: Row[] };
+
+const GROUPS: Group[] = [
+  {
+    title: "file",
+    rows: [
+      { keys: ["⌘", "⇧", "O"], label: "open a folder of notes" },
+      { keys: ["⌘", "O"], label: "open a single .md file" },
+      { keys: ["⌘", "N"], label: "new untitled buffer" },
+      { keys: ["⌘", "S"], label: "save current file" },
+    ],
+  },
+  {
+    title: "view",
+    rows: [
+      { keys: ["⌘", "K"], label: "open command palette" },
+      { keys: ["⌘", "B"], label: "show / hide sidebar" },
+      { keys: ["⌘", "."], label: "toggle reading mode" },
+      { keys: ["⌃", "⌘", "F"], label: "toggle fullscreen" },
+    ],
+  },
+  {
+    title: "edit",
+    rows: [
+      { keys: ["⌘", "F"], label: "find / replace in editor" },
+      { keys: ["⌘", "G"], label: "find next match" },
+    ],
+  },
+  {
+    title: "share",
+    rows: [
+      { keys: ["⌘", "⇧", "C"], label: "copy markdown to clipboard" },
+      { keys: ["⌘", "P"], label: "export to pdf" },
+    ],
+  },
+  {
+    title: "help",
+    rows: [
+      { keys: ["⌘", "/"], label: "open this help" },
+      { keys: ["esc"], label: "close any popup / overlay" },
+    ],
+  },
 ];
 
 const TIPS = [
@@ -63,8 +91,10 @@ export function HelpOverlay({ open, onClose, onReplayTutorial }: HelpOverlayProp
             draggable={false}
             className="mdv-help__art"
           />
-          <span className="mdv-help__brand">marka.md</span>
-          <span className="mdv-help__subtitle">how to use</span>
+          <div className="mdv-help__title-text">
+            <span className="mdv-help__brand">marka.md</span>
+            <span className="mdv-help__subtitle">keyboard + tips</span>
+          </div>
         </div>
         <Button
           title="close (esc)"
@@ -76,19 +106,26 @@ export function HelpOverlay({ open, onClose, onReplayTutorial }: HelpOverlayProp
 
       <div className="mdv-help__body">
         <section className="mdv-help__section">
-          <h3 className="mdv-help__h">keyboard shortcuts</h3>
-          <ul className="mdv-help__list">
-            {SHORTCUTS.map((s) => (
-              <li key={s.label} className="mdv-help__row">
-                <span className="mdv-help__keys">
-                  {s.keys.map((k, i) => (
-                    <Kbd key={`${s.label}-${i}`}>{k}</Kbd>
+          <h3 className="mdv-help__h">shortcuts</h3>
+          <div className="mdv-help__groups">
+            {GROUPS.map((g) => (
+              <div key={g.title} className="mdv-help__group">
+                <div className="mdv-help__group-title">{g.title}</div>
+                <ul className="mdv-help__list">
+                  {g.rows.map((s) => (
+                    <li key={s.label} className="mdv-help__row">
+                      <span className="mdv-help__keys">
+                        {s.keys.map((k, i) => (
+                          <Kbd key={`${s.label}-${i}`}>{k}</Kbd>
+                        ))}
+                      </span>
+                      <span className="mdv-help__label">{s.label}</span>
+                    </li>
                   ))}
-                </span>
-                <span className="mdv-help__label">{s.label}</span>
-              </li>
+                </ul>
+              </div>
             ))}
-          </ul>
+          </div>
         </section>
 
         <section className="mdv-help__section">

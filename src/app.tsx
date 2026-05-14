@@ -83,6 +83,13 @@ export function App() {
     setAboutOpen(true);
   }, []);
 
+  const loadDemo = useCallback(() => {
+    setSource(DEMO_MARKDOWN);
+    setSavedContent(DEMO_MARKDOWN);
+    setActivePath(null);
+    setSaveStatus("idle");
+  }, [setActivePath]);
+
   const handleToggleSidebarFromCommands = useCallback(() => {
     setSidebarOpen((v) => !v);
   }, [setSidebarOpen]);
@@ -532,6 +539,7 @@ export function App() {
         showHelp,
         showWelcome,
         showAbout,
+        loadDemo,
         copyMarkdown,
         exportToPdf,
         toggleFullscreen,
@@ -555,6 +563,7 @@ export function App() {
       showHelp,
       showWelcome,
       showAbout,
+      loadDemo,
       exportToPdf,
       toggleFullscreen,
       handleToggleSidebarFromCommands,
