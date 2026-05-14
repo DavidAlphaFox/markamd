@@ -26,6 +26,13 @@
     color var(--dur-base) var(--easing);
 }
 
+/* pin chrome rows explicitly so display:none on any sibling
+   (e.g. in reading mode) doesn't shift later children up via auto-flow */
+.mdv-app > .mdv-titlebar { grid-row: 1; }
+.mdv-app > .mdv-breadcrumb { grid-row: 2; }
+.mdv-app > .mdv-shell { grid-row: 3; }
+.mdv-app > .mdv-statusbar { grid-row: 4; }
+
 /* reading mode — Preview is rendered directly as flex-1 child of .mdv-shell */
 .mdv-app.is-reading {
   grid-template-rows: var(--titlebar-h) 0 1fr 0;
