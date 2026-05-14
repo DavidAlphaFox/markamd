@@ -18,6 +18,7 @@ import { TooltipRoot } from "@/components/primitives";
 import { useDebouncedValue, usePersistedState, useShortcuts, useSyncScroll } from "@/hooks";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { listen } from "@tauri-apps/api/event";
+import { tempDir } from "@tauri-apps/api/path";
 import { openPath } from "@tauri-apps/plugin-opener";
 import {
   basename,
@@ -80,23 +81,147 @@ export function App() {
     setSidebarOpen((v) => !v);
   }, [setSidebarOpen]);
 
-  const exportToPdf = useCallback(() => {
-    // KNOWN LIMITATION: window.print() is a no-op in Tauri 2's WKWebView on
-    // macOS — it returns synchronously without surfacing the native print
-    // panel. The body class flashes on/off but no dialog appears.
-    // Planned fix: render markdown → standalone styled HTML → temp file →
-    // openPath() in default browser, where ⌘P → Save as PDF works natively.
-    document.body.classList.add("mdv-print");
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        try {
-          window.print();
-        } finally {
-          document.body.classList.remove("mdv-print");
-        }
+  const exportToPdf = useCallback(async () => {
+    // workaround: Tauri 2's WKWebView no-ops window.print(). instead, clone
+    // the already-rendered preview article (which has mermaid svgs, katex
+    // html, and shiki spans already painted), wrap in a standalone html
+    // doc with print-friendly styles, write to OS temp dir, open in the
+    // user's default browser. the browser auto-triggers its print dialog
+    // on load — user picks "Save as PDF" → real native flow.
+    if (!source.trim()) {
+      setLoadError({
+        message: "nothing to export. open or write some markdown first.",
       });
+      return;
+    }
+
+    const article = document.querySelector<HTMLElement>(".mdv-prose");
+    if (!article) {
+      setLoadError({
+        message: "preview isn't rendered yet. try again in a moment.",
+      });
+      return;
+    }
+
+    const fileName = activePath ? basename(activePath) : undefined;
+    const title = fileName ?? "marka.md export";
+    const escapeHtml = (s: string): string =>
+      s
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+
+    // self-contained print stylesheet — light theme regardless of app theme.
+    // tracks the live prose CSS conceptually but stays decoupled so the
+    // exported pdf has a stable "document" look.
+    const printStyles = `
+      *, *::before, *::after { box-sizing: border-box; }
+      :root {
+        --pfg: #1d1d1f;
+        --pmuted: #6e6e73;
+        --paccent: #e2722e;
+        --pborder: rgba(0, 0, 0, 0.08);
+      }
+      html, body {
+        background: #fff;
+        color: var(--pfg);
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", system-ui, sans-serif;
+        font-size: 15px;
+        line-height: 1.65;
+        margin: 0;
+        padding: 0;
+        -webkit-font-smoothing: antialiased;
+      }
+      .doc { max-width: 720px; margin: 0 auto; padding: 56px 32px 96px; }
+      h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.018em; }
+      h1 { font-size: 2.1em; margin: 0 0 0.5em; }
+      h2 { font-size: 1.55em; margin: 2em 0 0.5em; }
+      h3 { font-size: 1.25em; margin: 1.6em 0 0.5em; }
+      h4 { font-size: 1em; margin: 1.4em 0 0.4em; }
+      p, ul, ol, blockquote, pre, table { margin: 0 0 1em; }
+      a {
+        color: var(--paccent);
+        text-decoration: none;
+        border-bottom: 1px solid color-mix(in srgb, var(--paccent) 30%, transparent);
+      }
+      code {
+        font-family: "SF Mono", "JetBrains Mono", ui-monospace, monospace;
+        font-size: 0.88em;
+        background: rgba(0, 0, 0, 0.045);
+        padding: 1px 6px;
+        border-radius: 4px;
+      }
+      pre {
+        font-family: "SF Mono", "JetBrains Mono", ui-monospace, monospace;
+        font-size: 12.5px;
+        line-height: 1.55;
+        background: #fafafa;
+        border: 1px solid var(--pborder);
+        border-radius: 8px;
+        padding: 14px 16px;
+        overflow-x: auto;
+      }
+      pre code { background: transparent; padding: 0; font-size: inherit; border-radius: 0; }
+      pre.shiki, pre.shiki * { font-family: inherit; }
+      blockquote {
+        border-left: 3px solid var(--paccent);
+        padding-left: 16px;
+        color: var(--pmuted);
+        font-style: italic;
+      }
+      hr { border: none; border-top: 1px solid var(--pborder); margin: 2em 0; }
+      ul, ol { padding-left: 24px; }
+      li { margin: 0.25em 0; }
+      img { max-width: 100%; height: auto; border-radius: 6px; }
+      table { border-collapse: collapse; width: 100%; }
+      th, td { border: 1px solid var(--pborder); padding: 8px 12px; text-align: left; vertical-align: top; }
+      th { background: rgba(0, 0, 0, 0.03); font-weight: 600; }
+      /* mermaid renders as inline SVG inside <pre class="mdv-mermaid"> */
+      .mdv-mermaid { background: transparent; border: 0; padding: 0; text-align: center; }
+      .mdv-mermaid svg { max-width: 100%; height: auto; }
+      /* hide in-app affordances that don't belong in print */
+      .mdv-copy, .mdv-codeblock > .mdv-copy { display: none !important; }
+      @page { margin: 18mm; }
+      @media print { body { padding: 0; } }
+    `;
+
+    const html = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${escapeHtml(title)}</title>
+  <style>${printStyles}</style>
+</head>
+<body>
+  <main class="doc">
+    ${article.outerHTML}
+  </main>
+  <script>
+    // auto-trigger the print dialog once layout settles
+    window.addEventListener("load", () => {
+      setTimeout(() => window.print(), 350);
     });
-  }, []);
+  </script>
+</body>
+</html>`;
+
+    try {
+      const dir = (await tempDir()).replace(/[\\/]+$/, "");
+      const safeName = (fileName ?? "marka-md-export")
+        .replace(/\.md$/i, "")
+        .replace(/[^\w.-]+/g, "-")
+        .slice(0, 60) || "marka-md-export";
+      const tempPath = `${dir}/${safeName}-${Date.now()}.html`;
+      await writeMarkdown(tempPath, html);
+      await openPath(tempPath);
+    } catch (err) {
+      console.error("marka.md: pdf export failed", err);
+      setLoadError({ message: `pdf export failed: ${err}` });
+    }
+  }, [source, activePath]);
 
   const toggleFullscreen = useCallback(async () => {
     const win = getCurrentWindow();
