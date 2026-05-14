@@ -65,8 +65,9 @@ your recent files also live at the top of the palette.
 
 ## 6. themes
 
-5 themes ship in the box:
+6 themes ship in the box:
 
+- **system** — follows macOS appearance
 - **latte** — light, warm
 - **matcha** — washi paper + kelly green
 - **frappé** / **macchiato** / **mocha** — catppuccin dark family
@@ -89,6 +90,7 @@ flip on **transparency** in the theme menu for the macOS blur look.
 | ⌘⇧C | copy markdown to clipboard |
 | ⌘P | export to pdf |
 | ⌘F | find / replace in editor |
+| ⌘G | find next match |
 | ⌘/ | this help (in the status bar) |
 | esc | close any popup |
 

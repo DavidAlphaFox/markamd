@@ -22,6 +22,7 @@ const SHORTCUTS: Row[] = [
   { keys: ["⌘", "⇧", "C"], label: "copy markdown to clipboard" },
   { keys: ["⌘", "P"], label: "export to pdf" },
   { keys: ["⌘", "F"], label: "find / replace in editor" },
+  { keys: ["⌘", "G"], label: "find next match" },
   { keys: ["⌘", "/"], label: "open this help" },
   { keys: ["esc"], label: "close any popup / overlay" },
 ];

@@ -379,6 +379,11 @@ export function App() {
     setSavedContent("");
     setActivePath(null);
     setSaveStatus("idle");
+    // focus the editor on next frame so users can start typing immediately
+    requestAnimationFrame(() => {
+      const editor = document.querySelector<HTMLElement>(".mdv-editor .cm-content");
+      editor?.focus();
+    });
   }, [setActivePath]);
 
   const handleToggleSidebar = useCallback(() => {

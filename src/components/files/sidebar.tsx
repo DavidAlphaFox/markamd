@@ -82,16 +82,17 @@ export function Sidebar({
     setSearchOpen(false);
   }, [rootPath]);
 
-  // autofocus when opening; Escape closes
+  // autofocus when opening; Escape closes (but defer to any open modal overlay)
   useEffect(() => {
     if (!searchOpen) return;
     searchInputRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        setSearchOpen(false);
-        setQuery("");
-      }
+      if (e.key !== "Escape") return;
+      // if any modal overlay is open, let it consume the Escape first
+      if (document.querySelector('[role="dialog"][aria-modal="true"]')) return;
+      e.preventDefault();
+      setSearchOpen(false);
+      setQuery("");
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
