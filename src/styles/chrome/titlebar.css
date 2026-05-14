@@ -17,6 +17,7 @@
   background: var(--border);
   margin: 0 4px;
   display: inline-block;
+  vertical-align: middle;
 }
 
 .mdv-titlebar__lead {
@@ -68,6 +69,10 @@
 }
 
 .mdv-titlebar__filename {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 100%;
   font-family: var(--font-mono);
   white-space: nowrap;
   overflow: hidden;
@@ -75,11 +80,14 @@
 }
 
 .mdv-titlebar__dot {
+  flex: 0 0 auto;
   width: 6px;
   height: 6px;
   border-radius: 999px;
   background: var(--accent);
-  display: inline-block;
+  /* nudge down by half a pixel for optical centering against the mono
+     x-height — the geometric middle of a 14px line still reads a hair high */
+  transform: translateY(0.5px);
 }
 
 .mdv-titlebar__spacer {
