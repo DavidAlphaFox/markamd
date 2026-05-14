@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Copy, FolderOpen, Search, X } from "lucide-react";
+import { FolderOpen, Search, X } from "lucide-react";
 import { Button, Icon } from "@/components/primitives";
 import { basename, dirname, walkMarkdownFiles, type FlatFileEntry } from "@/lib";
 import emptyTowerUrl from "@/assets/mascot/empty-m.png";
@@ -9,14 +9,10 @@ type SidebarProps = {
   open: boolean;
   rootPath: string | null;
   activePath: string | null;
-  selectedPaths: ReadonlySet<string>;
   width: number;
   onWidthChange: (next: number) => void;
   onOpenFolder: () => void;
   onSelectFile: (path: string) => void;
-  onToggleSelection: (path: string) => void;
-  onClearSelection: () => void;
-  onCopyBundle: () => void;
 };
 
 const MIN_WIDTH = 180;
@@ -26,14 +22,10 @@ export function Sidebar({
   open,
   rootPath,
   activePath,
-  selectedPaths,
   width,
   onWidthChange,
   onOpenFolder,
   onSelectFile,
-  onToggleSelection,
-  onClearSelection,
-  onCopyBundle,
 }: SidebarProps) {
   const draggingRef = useRef(false);
   const startXRef = useRef(0);
@@ -110,8 +102,6 @@ export function Sidebar({
     setQuery("");
   }, []);
 
-  const selectedCount = selectedPaths.size;
-
   return (
     <aside
       className={`mdv-sidebar${open ? " is-open" : ""}`}
@@ -119,52 +109,59 @@ export function Sidebar({
       aria-hidden={!open}
     >
       <div className="mdv-sidebar__inner" style={{ width: `${width}px` }}>
-        <header className={`mdv-sidebar__header${searchOpen ? " is-searching" : ""}`}>
-          {searchOpen && rootPath ? (
-            <>
-              <span className="mdv-sidebar__search-icon" aria-hidden>
-                <Icon icon={Search} size={12} strokeWidth={1.5} />
-              </span>
-              <input
-                ref={searchInputRef}
-                type="text"
-                className="mdv-sidebar__search-input"
-                placeholder={`search in ${basename(rootPath)}…`}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                spellCheck={false}
-                autoCorrect="off"
-                autoCapitalize="off"
-              />
+        <header className="mdv-sidebar__header">
+          <span className="mdv-sidebar__title">
+            {rootPath ? basename(rootPath) : "no folder"}
+          </span>
+          <div className="mdv-sidebar__header-actions">
+            {rootPath ? (
               <Button
-                title="close search (esc)"
-                aria-label="close search"
-                onClick={closeSearch}
-                icon={<Icon icon={X} size={12} strokeWidth={1.5} />}
+                title={searchOpen ? "close search (esc)" : "search folder"}
+                aria-label={searchOpen ? "close search" : "search folder"}
+                aria-pressed={searchOpen}
+                onClick={() => (searchOpen ? closeSearch() : setSearchOpen(true))}
+                icon={<Icon icon={Search} size={12} strokeWidth={1.5} />}
               />
-            </>
-          ) : (
-            <>
-              <span className="mdv-sidebar__title">
-                {rootPath ? basename(rootPath) : "no folder"}
-              </span>
-              {rootPath ? (
-                <Button
-                  title="search folder (⌘p)"
-                  aria-label="search folder"
-                  onClick={() => setSearchOpen(true)}
-                  icon={<Icon icon={Search} size={12} strokeWidth={1.5} />}
-                />
-              ) : null}
-              <Button
-                title="open folder (⌘⇧O)"
-                aria-label="open folder"
-                onClick={onOpenFolder}
-                icon={<Icon icon={FolderOpen} size={13} strokeWidth={1.5} />}
-              />
-            </>
-          )}
+            ) : null}
+            <Button
+              title="open folder (⌘⇧O)"
+              aria-label="open folder"
+              onClick={onOpenFolder}
+              icon={<Icon icon={FolderOpen} size={13} strokeWidth={1.5} />}
+            />
+          </div>
         </header>
+        {rootPath ? (
+          <div
+            className={`mdv-sidebar__search-row${searchOpen ? " is-open" : ""}`}
+            aria-hidden={!searchOpen}
+          >
+            <span className="mdv-sidebar__search-icon" aria-hidden>
+              <Icon icon={Search} size={12} strokeWidth={1.5} />
+            </span>
+            <input
+              ref={searchInputRef}
+              type="text"
+              className="mdv-sidebar__search-input"
+              placeholder={`search in ${basename(rootPath)}…`}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              spellCheck={false}
+              autoCorrect="off"
+              autoCapitalize="off"
+              tabIndex={searchOpen ? 0 : -1}
+            />
+            <button
+              type="button"
+              className="mdv-sidebar__search-close"
+              aria-label="close search"
+              onClick={closeSearch}
+              tabIndex={searchOpen ? 0 : -1}
+            >
+              <Icon icon={X} size={11} strokeWidth={2} />
+            </button>
+          </div>
+        ) : null}
         <div className="mdv-sidebar__body">
           {rootPath ? (
             query.trim().length > 0 ? (
@@ -178,9 +175,7 @@ export function Sidebar({
               <FileTree
                 rootPath={rootPath}
                 activePath={activePath}
-                selectedPaths={selectedPaths}
                 onSelect={onSelectFile}
-                onToggleSelection={onToggleSelection}
               />
             )
           ) : (
@@ -199,30 +194,6 @@ export function Sidebar({
             </button>
           )}
         </div>
-        {selectedCount > 0 ? (
-          <footer className="mdv-sidebar__bundle">
-            <div className="mdv-sidebar__bundle-info">
-              <span className="mdv-sidebar__bundle-count">{selectedCount}</span>
-              <span className="mdv-sidebar__bundle-label">
-                {selectedCount === 1 ? "file selected" : "files selected"}
-              </span>
-            </div>
-            <div className="mdv-sidebar__bundle-actions">
-              <Button
-                title="copy bundle to clipboard (⌘⇧C)"
-                aria-label="copy bundle"
-                onClick={onCopyBundle}
-                icon={<Icon icon={Copy} size={12} strokeWidth={1.5} />}
-              />
-              <Button
-                title="clear selection"
-                aria-label="clear selection"
-                onClick={onClearSelection}
-                icon={<Icon icon={X} size={12} strokeWidth={1.5} />}
-              />
-            </div>
-          </footer>
-        ) : null}
       </div>
 
       <div
