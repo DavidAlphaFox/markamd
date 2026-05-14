@@ -12,16 +12,21 @@ type AboutOverlayProps = {
 
 const REPO_URL = "https://github.com/mattenarle10/markamd";
 const SITE_URL = "https://markamd.vercel.app";
+const AUTHOR_URL = "https://github.com/mattenarle10";
+
+let cachedVersion: string | null = null;
 
 export function AboutOverlay({ open, onClose }: AboutOverlayProps) {
-  const [version, setVersion] = useState<string | null>(null);
+  const [version, setVersion] = useState<string | null>(cachedVersion);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || cachedVersion) return;
     let cancelled = false;
     getVersion()
       .then((v) => {
-        if (!cancelled) setVersion(v);
+        if (cancelled) return;
+        cachedVersion = v;
+        setVersion(v);
       })
       .catch(() => {
         if (!cancelled) setVersion(null);
@@ -58,14 +63,15 @@ export function AboutOverlay({ open, onClose }: AboutOverlayProps) {
           aria-hidden
           width={88}
           height={88}
+          loading="eager"
           draggable={false}
           className="mdv-about__art"
         />
         <div className="mdv-about__brand">marka.md</div>
         <div className="mdv-about__version">
-          {version ? `v${version}` : "…"}
+          <span className="mdv-about__version-num">{version ? `v${version}` : "v…"}</span>
           <span className="mdv-about__dot" aria-hidden> · </span>
-          MIT
+          <span>MIT</span>
         </div>
         <p className="mdv-about__tagline">
           a local markdown editor, built for the notes you share with ai.
@@ -100,7 +106,14 @@ export function AboutOverlay({ open, onClose }: AboutOverlayProps) {
       </div>
 
       <footer className="mdv-about__footer">
-        <span>made with care · enarlem10</span>
+        made with care ·{" "}
+        <button
+          type="button"
+          className="mdv-about__footer-link"
+          onClick={() => void handleOpen(AUTHOR_URL)}
+        >
+          enarlem10
+        </button>
       </footer>
     </Overlay>
   );
