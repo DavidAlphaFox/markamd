@@ -27,10 +27,6 @@ const SLIDES: Slide[] = [
       <>
         a local markdown editor built around one loop:{" "}
         <strong>collect notes → write → share with ai</strong>. nothing leaves your machine until you copy.
-        <span className="mdv-welcome__chip">
-          <Sparkles size={10} strokeWidth={1.75} />
-          pre-release · auto-updates coming
-        </span>
       </>
     ),
   },
@@ -67,10 +63,6 @@ const SLIDES: Slide[] = [
     body: (
       <>
         <Kbd>⌘</Kbd><Kbd>K</Kbd> for all commands. <Kbd>⌘</Kbd><Kbd>/</Kbd> for help. happy writing.
-        <span className="mdv-welcome__chip">
-          <Sparkles size={10} strokeWidth={1.75} />
-          latest builds at markamd.vercel.app
-        </span>
       </>
     ),
   },

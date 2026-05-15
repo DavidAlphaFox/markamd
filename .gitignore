@@ -15,6 +15,19 @@ dist-ssr
 # personal scratchpad — never committed
 notes/
 
+# secrets — defensive ignores. real secrets live in 1Password + GH secrets,
+# but if someone accidentally drops a .p12 / .key / .pem into the repo, git
+# will refuse to track it instead of leaking it to a PR.
+*.p12
+*.pem
+*.cer
+*.key
+.tauri/
+.env
+.env.local
+.env.*.local
+*.pkcs12
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

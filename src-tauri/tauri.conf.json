@@ -32,6 +32,16 @@
     },
     "macOSPrivateApi": true
   },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "endpoints": [
+        "https://github.com/mattenarle10/markamd/releases/latest/download/latest.json"
+      ],
+      "dialog": false,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDM0OUEwNzYyQ0I5N0YxQ0EKUldUSzhaZkxZZ2VhTk41OVJRRk5idHV0OGZVQURMUVJpQ0t1eXJTMjF6YzhEcXpuVVlDL1NFSUEK"
+    }
+  },
   "bundle": {
     "active": true,
     "targets": "all",

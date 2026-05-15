@@ -40,16 +40,6 @@ works with claude, chatgpt, gemini, your local agent — anywhere that reads pla
 
 [download the latest release →](https://github.com/mattenarle10/markamd/releases/latest)
 
-### ⚠️ first launch — "marka.md is damaged"
-
-macos gatekeeper shows a misleading **"marka.md is damaged"** message for unsigned downloads. the app isn't damaged — it's just not yet notarized (apple developer enrollment in flight). **one-time fix** after dragging to `/Applications`:
-
-```sh
-xattr -rd com.apple.quarantine /Applications/marka.md.app
-```
-
-double-click to open. notarized v1.0 will drop this requirement.
-
 ### from source
 
 requires bun (or npm), rust toolchain, xcode command line tools.

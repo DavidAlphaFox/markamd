@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Heart, X } from "lucide-react";
+import { Download, Globe, Star, X } from "lucide-react";
 import { getVersion } from "@tauri-apps/api/app";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { Button, Icon, Overlay } from "@/components/primitives";
@@ -8,15 +8,27 @@ import mascotUrl from "@/assets/mascot/excite.png";
 type AboutOverlayProps = {
   open: boolean;
   onClose: () => void;
+  onCheckForUpdates?: () => void | Promise<void>;
 };
 
 const REPO_URL = "https://github.com/mattenarle10/markamd";
 const SITE_URL = "https://markamd.vercel.app";
-const AUTHOR_URL = "https://github.com/mattenarle10";
+const AUTHOR_PERSONAL_URL = "https://mattenarle.com";
 
 let cachedVersion: string | null = null;
 
-export function AboutOverlay({ open, onClose }: AboutOverlayProps) {
+export function AboutOverlay({ open, onClose, onCheckForUpdates }: AboutOverlayProps) {
+  const [checking, setChecking] = useState(false);
+  const handleCheck = async () => {
+    if (!onCheckForUpdates || checking) return;
+    setChecking(true);
+    try {
+      await onCheckForUpdates();
+    } finally {
+      setChecking(false);
+    }
+  };
+
   const [version, setVersion] = useState<string | null>(cachedVersion);
 
   useEffect(() => {
@@ -73,6 +85,17 @@ export function AboutOverlay({ open, onClose }: AboutOverlayProps) {
           <span className="mdv-about__dot" aria-hidden> · </span>
           <span>MIT</span>
         </div>
+        {onCheckForUpdates ? (
+          <button
+            type="button"
+            className="mdv-about__check"
+            onClick={() => void handleCheck()}
+            disabled={checking}
+          >
+            <Icon icon={Download} size={12} strokeWidth={1.5} />
+            {checking ? "checking…" : "check for updates"}
+          </button>
+        ) : null}
         <p className="mdv-about__tagline">
           a local markdown editor, built for the notes you share with ai.
         </p>
@@ -80,39 +103,30 @@ export function AboutOverlay({ open, onClose }: AboutOverlayProps) {
         <div className="mdv-about__links">
           <button
             type="button"
-            className="mdv-about__link"
+            className="mdv-about__link mdv-about__link--star"
             onClick={() => void handleOpen(REPO_URL)}
           >
-            <svg
-              width="13"
-              height="13"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              aria-hidden
-            >
-              <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.55v-2.03c-3.2.69-3.87-1.36-3.87-1.36-.52-1.33-1.27-1.68-1.27-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.69 1.25 3.34.96.1-.74.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.18a10.95 10.95 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.58.23 2.75.11 3.04.74.81 1.18 1.83 1.18 3.09 0 4.43-2.7 5.41-5.27 5.69.41.36.78 1.06.78 2.14v3.17c0 .3.21.66.8.55C20.21 21.39 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5z" />
-            </svg>
-            github
+            <Icon icon={Star} size={13} strokeWidth={1.5} />
+            star on github
           </button>
           <button
             type="button"
             className="mdv-about__link"
             onClick={() => void handleOpen(SITE_URL)}
           >
-            <Icon icon={Heart} size={13} strokeWidth={1.5} />
+            <Icon icon={Globe} size={13} strokeWidth={1.5} />
             markamd.vercel.app
           </button>
         </div>
       </div>
 
       <footer className="mdv-about__footer">
-        made with care ·{" "}
         <button
           type="button"
           className="mdv-about__footer-link"
-          onClick={() => void handleOpen(AUTHOR_URL)}
+          onClick={() => void handleOpen(AUTHOR_PERSONAL_URL)}
         >
-          enarlem10
+          mattenarle.com
         </button>
       </footer>
     </Overlay>

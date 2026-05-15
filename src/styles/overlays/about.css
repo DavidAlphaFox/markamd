@@ -136,3 +136,52 @@
   color: var(--accent);
   border-bottom-color: var(--accent);
 }
+
+.mdv-about__check {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 10px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--easing),
+    color var(--dur-fast) var(--easing),
+    background var(--dur-fast) var(--easing);
+}
+
+.mdv-about__check:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+.mdv-about__check:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* the star CTA — subtle accent treatment so it reads as the primary ask
+   without screaming. site link stays in its neutral default. */
+.mdv-about__link--star {
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+  background: color-mix(in srgb, var(--accent) 5%, transparent);
+  color: color-mix(in srgb, var(--accent) 80%, var(--fg));
+}
+
+.mdv-about__link--star svg {
+  color: var(--accent);
+}
+
+.mdv-about__link--star:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+}

@@ -47,6 +47,7 @@ import {
   STORAGE_KEYS,
 } from "@/lib";
 import { DEMO_MARKDOWN } from "@/lib/demo";
+import { applyUpdate, checkForUpdate } from "@/lib/updater";
 import "./app.css";
 
 const SAVED_FLASH_MS = 1200;
@@ -84,6 +85,9 @@ export function App() {
   } | null>(null);
   const [editingPath, setEditingPath] = useState<string | null>(null);
   const [newEntry, setNewEntry] = useState<NewEntry | null>(null);
+  const [updateAvail, setUpdateAvail] = useState<{ version: string } | null>(null);
+  const [updateInstalling, setUpdateInstalling] = useState(false);
+  const [updateUpToDate, setUpdateUpToDate] = useState(false);
 
   // undo stack for sidebar file operations — ⌘⌥Z pops + reverses
   type UndoOp =
@@ -294,7 +298,7 @@ export function App() {
       await openPath(tempPath);
     } catch (err) {
       console.error("marka.md: pdf export failed", err);
-      setLoadError({ message: `pdf export failed: ${err}` });
+      setLoadError({ message: "couldn't export to pdf — try again, or check disk space" });
     }
   }, [source, activePath]);
 
@@ -640,6 +644,45 @@ export function App() {
     };
   }, [loadFile]);
 
+  // check for updates once on launch (~1.5s after mount so the editor settles
+  // first). Tauri verifies the signature internally — anything not signed by
+  // our private updater key is rejected before the toast even appears.
+  useEffect(() => {
+    const timer = window.setTimeout(async () => {
+      const result = await checkForUpdate();
+      if (result.status === "available") {
+        setUpdateAvail({ version: result.version });
+      }
+    }, 1500);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  const handleApplyUpdate = useCallback(async () => {
+    if (updateInstalling) return;
+    setUpdateInstalling(true);
+    try {
+      await applyUpdate();
+      // process will relaunch — control rarely returns here
+    } catch (err) {
+      console.error("marka.md: update install failed", err);
+      setLoadError({
+        message: `couldn't install update — ${err instanceof Error ? err.message : err}`,
+      });
+      setUpdateInstalling(false);
+    }
+  }, [updateInstalling]);
+
+  const handleManualUpdateCheck = useCallback(async () => {
+    const result = await checkForUpdate();
+    if (result.status === "available") {
+      setUpdateAvail({ version: result.version });
+    } else if (result.status === "none") {
+      setUpdateUpToDate(true);
+    } else {
+      setLoadError({ message: `update check failed — ${result.message}` });
+    }
+  }, []);
+
   // OS file drops via HTML5 (Tauri's dragDropEnabled is OFF so the OS-level
   // intercept doesn't fight with the in-app sidebar drag-and-drop).
   // counter pattern: nested elements fire dragenter/leave multiple times, so we
@@ -820,6 +863,7 @@ export function App() {
         showAbout,
         loadDemo,
         undoFileOp: handleUndoFileOp,
+        checkForUpdates: handleManualUpdateCheck,
         copyMarkdown,
         exportToPdf,
         toggleFullscreen,
@@ -845,6 +889,7 @@ export function App() {
       showAbout,
       loadDemo,
       handleUndoFileOp,
+      handleManualUpdateCheck,
       exportToPdf,
       toggleFullscreen,
       handleToggleSidebarFromCommands,
@@ -943,6 +988,30 @@ export function App() {
         onDismiss={() => setCopyToast(false)}
       />
 
+      <Toast
+        open={updateAvail != null && loadError == null}
+        message={
+          updateInstalling
+            ? `installing v${updateAvail?.version}…`
+            : `update available · v${updateAvail?.version}`
+        }
+        variant="info"
+        durationMs={null}
+        onDismiss={() => setUpdateAvail(null)}
+        action={
+          updateInstalling
+            ? undefined
+            : { label: "install", onClick: () => void handleApplyUpdate() }
+        }
+      />
+
+      <Toast
+        open={updateUpToDate && loadError == null && updateAvail == null}
+        message="you're on the latest version 🐙"
+        variant="info"
+        onDismiss={() => setUpdateUpToDate(false)}
+      />
+
       <CommandPalette
         open={paletteOpen}
         onClose={() => setPaletteOpen(false)}
@@ -955,7 +1024,11 @@ export function App() {
         onReplayTutorial={showWelcome}
       />
 
-      <AboutOverlay open={aboutOpen} onClose={() => setAboutOpen(false)} />
+      <AboutOverlay
+        open={aboutOpen}
+        onClose={() => setAboutOpen(false)}
+        onCheckForUpdates={handleManualUpdateCheck}
+      />
 
       <WelcomeOverlay
         open={welcomeOpen}

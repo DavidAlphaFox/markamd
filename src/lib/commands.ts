@@ -8,6 +8,7 @@ import {
   FileText,
   FolderOpen,
   FolderPlus,
+  Download,
   Info,
   Leaf,
   Undo2,
@@ -49,6 +50,7 @@ export type CommandActions = {
   showAbout: () => void;
   loadDemo: () => void;
   undoFileOp: () => void | Promise<void>;
+  checkForUpdates: () => void | Promise<void>;
   copyMarkdown: () => void | Promise<void>;
   exportToPdf: () => void;
   toggleFullscreen: () => void | Promise<void>;
@@ -244,6 +246,14 @@ export function buildCommands(actions: CommandActions): Command[] {
       icon: Sparkles,
       category: "help",
       action: actions.showWelcome,
+    },
+    {
+      id: "check-updates",
+      label: "check for updates",
+      hint: "see if there's a newer version of marka.md",
+      icon: Download,
+      category: "help",
+      action: actions.checkForUpdates,
     },
     {
       id: "about",
