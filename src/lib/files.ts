@@ -1,5 +1,5 @@
 import { open } from "@tauri-apps/plugin-dialog";
-import { readDir, readFile, readTextFile, writeTextFile, exists, stat } from "@tauri-apps/plugin-fs";
+import { readDir, readFile, readTextFile, writeTextFile, exists, stat, rename, mkdir } from "@tauri-apps/plugin-fs";
 
 export type FileEntry = {
   name: string;
@@ -43,7 +43,7 @@ export function dirname(path: string): string {
   return i > 0 ? path.slice(0, i) : "/";
 }
 
-function joinPath(parent: string, child: string): string {
+export function joinPath(parent: string, child: string): string {
   const sep = parent.includes("\\") ? "\\" : "/";
   if (parent.endsWith(sep)) return `${parent}${child}`;
   return `${parent}${sep}${child}`;
@@ -169,4 +169,46 @@ export async function pathExists(path: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/** Thrown when a destination path already exists. Callers should surface a friendly toast. */
+export const FS_CONFLICT = "FS_CONFLICT";
+
+/** Move a file or folder into `dstParent`. Preserves the source basename. */
+export async function moveEntry(src: string, dstParent: string): Promise<string> {
+  const target = joinPath(dstParent, basename(src));
+  if (target === src) return src;
+  if (await pathExists(target)) throw new Error(FS_CONFLICT);
+  await rename(src, target);
+  return target;
+}
+
+/** Rename in place (same parent folder). `newName` is just the base name. */
+export async function renameEntry(src: string, newName: string): Promise<string> {
+  const trimmed = newName.trim();
+  if (!trimmed) throw new Error("empty name");
+  const target = joinPath(dirname(src), trimmed);
+  if (target === src) return src;
+  if (await pathExists(target)) throw new Error(FS_CONFLICT);
+  await rename(src, target);
+  return target;
+}
+
+export async function createFolder(parent: string, name: string): Promise<string> {
+  const trimmed = name.trim();
+  if (!trimmed) throw new Error("empty name");
+  const target = joinPath(parent, trimmed);
+  if (await pathExists(target)) throw new Error(FS_CONFLICT);
+  await mkdir(target, { recursive: false });
+  return target;
+}
+
+export async function createMarkdownFile(parent: string, name: string): Promise<string> {
+  const trimmed = name.trim();
+  if (!trimmed) throw new Error("empty name");
+  const withExt = /\.(md|markdown|mdx)$/i.test(trimmed) ? trimmed : `${trimmed}.md`;
+  const target = joinPath(parent, withExt);
+  if (await pathExists(target)) throw new Error(FS_CONFLICT);
+  await writeTextFile(target, "");
+  return target;
 }
