@@ -108,3 +108,20 @@ jobs:
           releaseDraft: false
           prerelease: false
           args: --target aarch64-apple-darwin
+
+  # fires a Vercel deploy hook after a release publishes so markamd.vercel.app
+  # rebuilds and picks up the new version automatically (no manual empty
+  # commit needed). gracefully no-ops if the secret isn't set yet.
+  notify-site:
+    needs: build
+    runs-on: ubuntu-latest
+    if: ${{ success() }}
+    steps:
+      - name: ping vercel deploy hook
+        if: ${{ secrets.VERCEL_DEPLOY_HOOK != '' }}
+        run: |
+          echo "triggering markamd-site rebuild for ${{ github.ref_name }}"
+          curl -fsS -X POST "${{ secrets.VERCEL_DEPLOY_HOOK }}"
+      - name: no hook configured
+        if: ${{ secrets.VERCEL_DEPLOY_HOOK == '' }}
+        run: echo "VERCEL_DEPLOY_HOOK secret not set — skipping site rebuild"
