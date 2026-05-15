@@ -81,30 +81,38 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # signing env (APPLE_SIGNING_IDENTITY / APPLE_ID / APPLE_PASSWORD /
-          # APPLE_TEAM_ID) is injected via $GITHUB_ENV by the cert-import step
-          # above ONLY when secrets are present. when secrets are absent, the
-          # cert step is skipped and none of those vars exist here → Tauri
-          # skips signing entirely (rather than trying with identity "").
+          # Apple signing env injected by the cert-import step via $GITHUB_ENV
+          # (APPLE_SIGNING_IDENTITY / APPLE_ID / APPLE_PASSWORD / APPLE_TEAM_ID).
+          # Tauri updater signing — signs the .app.tar.gz bundle + emits latest.json.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: "marka.md ${{ github.ref_name }}"
           releaseBody: |
-            **marka.md ${{ github.ref_name }}** — apple silicon dmg.
+            🐙 **marka.md ${{ github.ref_name }}** — notarized + auto-updating macOS app.
 
             ## install
 
-            1. download the `.dmg` below
-            2. open it, drag the app to Applications
-            3. if macOS says "marka.md is damaged", run once in Terminal:
+            1. download the **`.dmg`** below
+            2. open it → drag **marka.md.app** into `/Applications`
+            3. open it. that's it.
 
-            ```bash
-            xattr -rd com.apple.quarantine /Applications/marka.md.app
-            ```
+            ## what's in this release
 
-            (one-time quarantine bypass for unsigned indie builds — fixes when v1.0 ships notarized.)
+            see the always-fresh changelog → https://markamd.vercel.app/changelog
 
-            full changelog: https://github.com/mattenarle10/markamd/compare/v0.1.0...${{ github.ref_name }}
+            ## thanks 🐙
+
+            if marka.md is useful, **[star the repo](https://github.com/mattenarle10/markamd)** — helps a lot.
+
+            questions / feedback / bugs → [open an issue](https://github.com/mattenarle10/markamd/issues)
+
+            — matt enarle · [mattenarle.com](https://mattenarle.com)
+
+            ---
+
+            full diff: https://github.com/mattenarle10/markamd/compare/v0.1.0...${{ github.ref_name }}
           releaseDraft: false
           prerelease: false
           args: --target aarch64-apple-darwin
