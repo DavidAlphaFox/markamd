@@ -42,7 +42,7 @@ function buildTheme() {
       },
       ".cm-scroller": {
         fontFamily: "var(--font-mono)",
-        lineHeight: "1.65",
+        lineHeight: "1.55",
         padding: "20px 28px 80px",
       },
       ".cm-content": {
