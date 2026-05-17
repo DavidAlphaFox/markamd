@@ -157,7 +157,14 @@ jobs:
         shell: bash
         run: |
           set -e
-          ASSET_ID=$(gh api repos/${{ github.repository }}/releases/tags/${{ github.ref_name }} --jq '.assets[] | select(.name | endswith(".dmg")) | .id' | head -1)
+          # /releases/tags/<tag> 404s on draft releases. /releases lists all
+          # (incl. drafts) — filter by tag_name to find the right one.
+          RELEASE_ID=$(gh api repos/${{ github.repository }}/releases --jq '.[] | select(.tag_name == "${{ github.ref_name }}") | .id' | head -1)
+          if [ -z "$RELEASE_ID" ]; then
+            echo "no release found for tag ${{ github.ref_name }} — skipping rename"
+            exit 0
+          fi
+          ASSET_ID=$(gh api "repos/${{ github.repository }}/releases/$RELEASE_ID/assets" --jq '.[] | select(.name | endswith(".dmg")) | .id' | head -1)
           if [ -n "$ASSET_ID" ]; then
             echo "renaming dmg asset $ASSET_ID → marka.md.dmg"
             gh api "repos/${{ github.repository }}/releases/assets/$ASSET_ID" -X PATCH -f name='marka.md.dmg'
