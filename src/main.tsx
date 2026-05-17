@@ -13,7 +13,7 @@ const platformClass = /Mac|iPhone|iPad|iPod/i.test(ua)
     ? "is-windows"
     : /Linux/i.test(ua)
       ? "is-linux"
-      : "is-mac"; // default — matches our notarized primary target
+      : "is-unknown"; // no platform-specific chrome applied — safe default
 document.documentElement.classList.add(platformClass);
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(

@@ -135,7 +135,14 @@ jobs:
             ---
 
             full diff: https://github.com/mattenarle10/markamd/compare/v1.0.2...${{ github.ref_name }}
-          releaseDraft: false
+          # publish as a DRAFT so the matrix runners can both upload artifacts
+          # (including their per-platform latest.json entries) without racing
+          # to overwrite each other on the same live release. the publish-release
+          # job below flips the draft to public AFTER both legs complete + a
+          # consolidated latest.json with both `darwin-aarch64` and
+          # `windows-x86_64` platforms is in place.
+          # ref: https://v2.tauri.app/distribute/pipelines/github/
+          releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
 
@@ -158,13 +165,33 @@ jobs:
             echo "no dmg asset found — skipping rename"
           fi
 
+  # flip the draft release to public AFTER both matrix runners have finished
+  # uploading their artifacts + latest.json entries. this prevents the
+  # cross-platform race where each runner could overwrite the other's
+  # latest.json on a live release.
+  publish-release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: publish draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "publishing draft release for ${{ github.ref_name }}"
+          gh release edit "${{ github.ref_name }}" \
+            --repo "${{ github.repository }}" \
+            --draft=false \
+            --latest
+
   # fires a Vercel deploy hook after a release publishes so markamd.vercel.app
   # rebuilds and picks up the new version automatically (no manual empty
   # commit needed). gracefully no-ops if the secret isn't set yet.
   # NOTE: GitHub Actions does not allow `secrets.*` in `if:` expressions —
   # they must be evaluated through env first (same pattern as HAS_APPLE_CERT).
   notify-site:
-    needs: build
+    needs: publish-release
     runs-on: ubuntu-latest
     env:
       HAS_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK != '' }}
