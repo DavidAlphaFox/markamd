@@ -132,10 +132,11 @@ jobs:
 
             Windows SmartScreen may show "Windows protected your PC". Click **More info** → **Run anyway**. marka.md is free + open source — we don't sign Windows builds (paid certs aren't worth it for a free MIT project). Full source on GitHub if you want to inspect or build it yourself.
 
-            ### Linux (x86_64)
-            download `marka.md_*.AppImage` → `chmod +x marka.md_*.AppImage` → run. self-contained, no install needed.
+            ### Linux (x86_64) — pick your flavor 🐧
 
-            or grab `marka.md_*_amd64.deb` if you're on Debian/Ubuntu: `sudo dpkg -i marka.md_*_amd64.deb`.
+            - **`marka.md_*.AppImage`** — works on any distro: `chmod +x marka.md_*.AppImage` → run. self-contained, no install.
+            - **`marka.md_*_amd64.deb`** — Debian / Ubuntu / Mint / Pop!_OS: `sudo dpkg -i marka.md_*_amd64.deb`
+            - **`marka.md-*.x86_64.rpm`** — Fedora / RHEL / Rocky / openSUSE: `sudo dnf install marka.md-*.x86_64.rpm`
 
             ## what's in this release
 

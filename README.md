@@ -50,11 +50,13 @@ grab `marka.md_*-setup.exe` → run.
 
 Windows SmartScreen may show "Windows protected your PC". Click **More info** → **Run anyway**. marka.md is free + MIT — we don't sign Windows builds (paid certs aren't worth it for a free OSS project). Full source is right here if you'd rather build it yourself.
 
-### Linux (x86_64, AppImage)
+### Linux (x86_64)
 
-grab `marka.md_*.AppImage` → `chmod +x marka.md_*.AppImage` → run. self-contained, no install step needed.
+three flavors, pick what fits your distro:
 
-or grab the `.deb` if you're on Debian/Ubuntu: `sudo dpkg -i marka.md_*_amd64.deb`.
+- **AppImage** (works anywhere): `chmod +x marka.md_*.AppImage` → run. self-contained, no install step needed.
+- **.deb** (Debian / Ubuntu / Mint / Pop!_OS): `sudo dpkg -i marka.md_*_amd64.deb`
+- **.rpm** (Fedora / RHEL / Rocky / openSUSE): `sudo dnf install marka.md-*.x86_64.rpm`
 
 no signing required on Linux — it's the freedom platform 🐧
 
