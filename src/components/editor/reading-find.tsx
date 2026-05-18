@@ -7,6 +7,12 @@ type Props = {
   onClose: () => void;
   /** the rendered `<article class="mdv-prose">` to search through */
   scope: HTMLElement | null;
+  /**
+   * any value that changes whenever `scope`'s innerHTML changes (e.g. the
+   * source markdown). When this changes, the find component re-walks fresh
+   * DOM so stale `<mark>` references don't linger after a Preview re-render.
+   */
+  contentKey?: string | number;
 };
 
 /**
@@ -17,14 +23,16 @@ type Props = {
  * Cleanup is guaranteed on unmount + close: marks are unwrapped back to plain
  * text so the next render of the prose stays clean.
  */
-export function ReadingFind({ open, onClose, scope }: Props) {
+export function ReadingFind({ open, onClose, scope, contentKey }: Props) {
   const [query, setQuery] = useState("");
   const [matches, setMatches] = useState<HTMLElement[]>([]);
   const [activeIdx, setActiveIdx] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // re-highlight whenever query or scope changes — debounced 80ms so typing
-  // stays smooth even on big docs.
+  // re-highlight whenever query, scope, or content changes — debounced 80ms.
+  // contentKey is in the deps so when Preview re-renders the prose article
+  // (e.g. source markdown updated), we re-walk the fresh DOM instead of
+  // operating on detached `<mark>` nodes from the previous walk.
   useEffect(() => {
     if (!open || !scope) return;
     const t = window.setTimeout(() => {
@@ -36,15 +44,18 @@ export function ReadingFind({ open, onClose, scope }: Props) {
         return;
       }
       const hits = findAndHighlight(scope, trimmed);
-      setMatches(hits);
+      // guard against the rare case where the article was replaced between
+      // walk and state-write — drop disconnected nodes.
+      const connected = hits.filter((h) => h.isConnected);
+      setMatches(connected);
       setActiveIdx(0);
-      if (hits[0]) {
-        hits[0].classList.add("mdv-find-hit--active");
-        hits[0].scrollIntoView({ block: "center", behavior: "smooth" });
+      if (connected[0]) {
+        connected[0].classList.add("mdv-find-hit--active");
+        connected[0].scrollIntoView({ block: "center", behavior: "smooth" });
       }
     }, 80);
     return () => window.clearTimeout(t);
-  }, [open, query, scope]);
+  }, [open, query, scope, contentKey]);
 
   // cleanup on unmount or scope swap (e.g. reading mode toggled off)
   useEffect(() => {

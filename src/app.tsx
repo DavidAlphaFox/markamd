@@ -419,15 +419,29 @@ export function App() {
     [],
   );
 
+  // refs to source + savedContent so handleExternalChange has stable identity.
+  // without this, every keystroke recreates the callback → useFileWatcher's
+  // effect tears down + restarts the 2s interval, adding a stat() call per
+  // keystroke and risking missed external edits during the restart window.
+  const sourceRef = useRef(source);
+  const savedRef = useRef(savedContent);
+  useEffect(() => {
+    sourceRef.current = source;
+  }, [source]);
+  useEffect(() => {
+    savedRef.current = savedContent;
+  }, [savedContent]);
+
   // external-change handler: re-read the file when its mtime ticks. if user
   // has no unsaved changes, silently reload + show a brief toast. if they DO
   // have dirty edits, surface a conflict toast and let them choose.
+  // Stable dep set ([activePath]) — watcher only rebinds when file changes.
   const handleExternalChange = useCallback(async () => {
     if (!activePath) return;
     try {
       const fresh = await readMarkdown(activePath);
-      if (fresh === source) return; // mtime ticked but content identical — ignore
-      const dirty = source !== savedContent;
+      if (fresh === sourceRef.current) return; // mtime ticked but content identical — ignore
+      const dirty = sourceRef.current !== savedRef.current;
       if (!dirty) {
         setSource(fresh);
         setSavedContent(fresh);
@@ -439,7 +453,7 @@ export function App() {
     } catch (err) {
       console.error("marka.md: external change reload failed", err);
     }
-  }, [activePath, source, savedContent]);
+  }, [activePath]);
   useFileWatcher(activePath, handleExternalChange);
 
   // mark dirty as soon as content diverges from disk
@@ -827,7 +841,9 @@ export function App() {
       },
       "mod+b": (e: KeyboardEvent) => {
         e.preventDefault();
-        setSidebarOpen(!sidebarOpen);
+        // functional update — avoids stale closure on rapid double-tap when
+        // shortcuts memo hasn't rebuilt yet
+        setSidebarOpen((v: boolean) => !v);
       },
       "mod+s": (e: KeyboardEvent) => {
         e.preventDefault();
@@ -995,6 +1011,7 @@ export function App() {
               open={findOpen}
               onClose={() => setFindOpen(false)}
               scope={proseEl}
+              contentKey={debouncedPreview}
             />
           </>
         ) : (
