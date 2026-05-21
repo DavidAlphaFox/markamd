@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Breadcrumb, StatusBar, TitleBar } from "@/components/chrome";
+import { Breadcrumb, StatusBar, TitleBar, type VimMode } from "@/components/chrome";
 import { Editor, Preview, ReadingFind, Splitter } from "@/components/editor";
 import { ContextMenu, Sidebar, type ContextMenuItem } from "@/components/files";
 import { AboutOverlay, CommandPalette, DropOverlay, HelpOverlay, Toast, WelcomeOverlay } from "@/components/overlays";
@@ -124,6 +124,7 @@ export function App() {
   } = useUpdateFlow({ onError: setLoadError });
 
   const [vimOn, setVimOn] = usePersistedState<boolean>(STORAGE_KEYS.vimMode, false);
+  const [vimMode, setVimMode] = useState<VimMode | null>(null);
   const [dragActive, setDragActive] = useState(false);
 
   const handleToggleSidebar = useCallback(() => {
@@ -154,8 +155,23 @@ export function App() {
   }, []);
 
   const [readingMode, setReadingMode] = useState(false);
-  const toggleReadingMode = useCallback(() => setReadingMode((v) => !v), []);
+  const [editorOnly, setEditorOnly] = useState(false);
+  // reading + editor-only are mutually exclusive view modes
+  const toggleReadingMode = useCallback(() => {
+    setReadingMode((v) => {
+      const next = !v;
+      if (next) setEditorOnly(false);
+      return next;
+    });
+  }, []);
   const exitReadingMode = useCallback(() => setReadingMode(false), []);
+  const toggleEditorOnly = useCallback(() => {
+    setEditorOnly((v) => {
+      const next = !v;
+      if (next) setReadingMode(false);
+      return next;
+    });
+  }, []);
 
   // ⌘F only bound while reading — CM owns it in editor mode.
   const [findOpen, setFindOpen] = useState(false);
@@ -430,6 +446,10 @@ export function App() {
         e.preventDefault();
         toggleReadingMode();
       },
+      "mod+shift+.": (e: KeyboardEvent) => {
+        e.preventDefault();
+        toggleEditorOnly();
+      },
       escape: (e: KeyboardEvent) => {
         if (readingMode) {
           e.preventDefault();
@@ -463,6 +483,7 @@ export function App() {
       readingMode,
       toggleReadingMode,
       exitReadingMode,
+      toggleEditorOnly,
     ],
   );
   useShortcuts(shortcuts);
@@ -494,6 +515,8 @@ export function App() {
         hasActivePath: activePath != null,
         sidebarOpen,
         readingMode,
+        editorOnly,
+        toggleEditorOnly,
       }),
     [
       handleNewFile,
@@ -582,10 +605,16 @@ export function App() {
               onCancelNew={() => setNewEntry(null)}
               treeVersion={treeVersion}
             />
-            <Splitter
-              left={<Editor value={source} onChange={setSource} vimOn={vimOn} />}
-              right={<Preview source={debouncedPreview} />}
-            />
+            {editorOnly ? (
+              <div className="mdv-shell__editor-solo">
+                <Editor value={source} onChange={setSource} vimOn={vimOn} onVimMode={setVimMode} />
+              </div>
+            ) : (
+              <Splitter
+                left={<Editor value={source} onChange={setSource} vimOn={vimOn} onVimMode={setVimMode} />}
+                right={<Preview source={debouncedPreview} />}
+              />
+            )}
           </>
         )}
       </main>
@@ -715,6 +744,7 @@ export function App() {
         minutes={minutes}
         docTokens={docTokens}
         onShowHelp={() => setHelpOpen(true)}
+        vimMode={readingMode ? null : vimMode}
       />
     </div>
   );
