@@ -1,78 +1,75 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  AboutOverlay,
-  Breadcrumb,
-  CommandPalette,
-  ContextMenu,
-  DropOverlay,
-  Editor,
-  HelpOverlay,
-  Preview,
-  ReadingFind,
-  Sidebar,
-  Splitter,
-  StatusBar,
-  TitleBar,
-  Toast,
-  WelcomeOverlay,
-  type ContextMenuItem,
-  type FileEntry,
-  type NewEntry,
-  type SaveStatus,
-} from "@/components/features";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Breadcrumb, StatusBar, TitleBar } from "@/components/chrome";
+import { Editor, Preview, ReadingFind, Splitter } from "@/components/editor";
+import { ContextMenu, Sidebar, type ContextMenuItem } from "@/components/files";
+import { AboutOverlay, CommandPalette, DropOverlay, HelpOverlay, Toast, WelcomeOverlay } from "@/components/overlays";
 import { TooltipRoot } from "@/components/primitives";
-import { useDebouncedValue, useFileWatcher, usePersistedState, useShortcuts, useSyncScroll } from "@/hooks";
+import {
+  useContextMenu,
+  useDebouncedValue,
+  useFileOps,
+  useFileSession,
+  useNotifications,
+  useOverlays,
+  usePersistedState,
+  useShortcuts,
+  useSyncScroll,
+  useUpdateFlow,
+} from "@/hooks";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { listen } from "@tauri-apps/api/event";
 import { openPath } from "@tauri-apps/plugin-opener";
 import {
   basename,
   buildCommands,
-  createFolder,
-  createMarkdownFile,
   dirname,
   estimateTokens,
   exportPreviewToPdf,
-  FS_CONFLICT,
   isMarkdownPath,
-  joinPath,
-  listFolder,
-  pathExists,
-  moveEntry,
   PdfExportError,
   pickFolder,
   pickMarkdownFile,
-  pickSaveMarkdown,
-  readMarkdown,
   removeEntry,
-  renameEntry,
-  validateMarkdownFile,
-  writeMarkdown,
   STORAGE_KEYS,
 } from "@/lib";
-import { DEMO_MARKDOWN } from "@/lib/demo";
-import { applyUpdate, checkForUpdate } from "@/lib/updater";
 import "./app.css";
 
-const SAVED_FLASH_MS = 1200;
-
-type UndoOp =
-  | { kind: "move"; from: string; to: string }
-  | { kind: "rename"; from: string; to: string }
-  | { kind: "create-folder"; path: string }
-  | { kind: "create-file"; path: string };
-
 export function App() {
-  const [source, setSource] = useState<string>(DEMO_MARKDOWN);
-  const [savedContent, setSavedContent] = useState<string>(DEMO_MARKDOWN);
-  const [activePath, setActivePath] = usePersistedState<string | null>(
-    STORAGE_KEYS.lastFile,
-    null,
-  );
-  const [rootPath, setRootPath] = usePersistedState<string | null>(
-    STORAGE_KEYS.lastFolder,
-    null,
-  );
+  const {
+    loadError,
+    setLoadError,
+    dismissLoadError,
+    copyPulse,
+    copyToast,
+    dismissCopyToast,
+    saveAsToast,
+    dismissSaveAsToast,
+    showSaveAsToast,
+    copyMarkdown: copyMarkdownCore,
+  } = useNotifications();
+
+  const {
+    source,
+    setSource,
+    savedContent,
+    activePath,
+    setActivePath,
+    rootPath,
+    setRootPath,
+    saveStatus,
+    recentFiles,
+    externalReloadToast,
+    dismissExternalReload,
+    externalConflict,
+    setExternalConflict,
+    loadFile,
+    loadDemo,
+    saveNow,
+    saveAs: saveAsCore,
+    startNewBuffer,
+    dirty,
+  } = useFileSession({ onLoadError: setLoadError });
+
   const [sidebarOpen, setSidebarOpen] = usePersistedState<boolean>(
     STORAGE_KEYS.sidebarOpen,
     false,
@@ -81,59 +78,53 @@ export function App() {
     STORAGE_KEYS.sidebarWidth,
     240,
   );
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
-  const [paletteOpen, setPaletteOpen] = useState(false);
-  const [helpOpen, setHelpOpen] = useState(false);
-  const [aboutOpen, setAboutOpen] = useState(false);
-  const [treeVersion, setTreeVersion] = useState(0);
-  const bumpTree = useCallback(() => setTreeVersion((v) => v + 1), []);
-  const [contextMenu, setContextMenu] = useState<{
-    x: number;
-    y: number;
-    path: string;
-    isDir: boolean;
-  } | null>(null);
-  const [editingPath, setEditingPath] = useState<string | null>(null);
-  const [newEntry, setNewEntry] = useState<NewEntry | null>(null);
-  const [updateAvail, setUpdateAvail] = useState<{ version: string } | null>(null);
-  const [updateInstalling, setUpdateInstalling] = useState(false);
-  const [updateUpToDate, setUpdateUpToDate] = useState(false);
+  const {
+    treeVersion,
+    bumpTree,
+    editingPath,
+    setEditingPath,
+    newEntry,
+    setNewEntry,
+    handleMove,
+    handleSubmitRename,
+    handleSubmitNew,
+    handleUndoFileOp,
+  } = useFileOps({
+    activePath,
+    setActivePath,
+    loadFile,
+    startNewBuffer,
+    onError: setLoadError,
+  });
 
-  const undoStackRef = useRef<UndoOp[]>([]);
-  const pushUndo = useCallback((op: UndoOp) => {
-    const stack = undoStackRef.current;
-    stack.push(op);
-    if (stack.length > 20) stack.shift();
-  }, []);
-  const [welcomed, setWelcomed] = usePersistedState<boolean>(STORAGE_KEYS.welcomed, false);
+  const {
+    paletteOpen,
+    setPaletteOpen,
+    helpOpen,
+    setHelpOpen,
+    aboutOpen,
+    setAboutOpen,
+    welcomeOpen,
+    dismissWelcome,
+    showWelcome,
+    showHelp,
+    showAbout,
+  } = useOverlays();
+
+  const { contextMenu, handleContextMenu, closeContextMenu } = useContextMenu();
+
+  const {
+    updateAvail,
+    setUpdateAvail,
+    updateInstalling,
+    updateUpToDate,
+    setUpdateUpToDate,
+    handleApplyUpdate,
+    handleManualUpdateCheck,
+  } = useUpdateFlow({ onError: setLoadError });
+
   const [vimOn, setVimOn] = usePersistedState<boolean>(STORAGE_KEYS.vimMode, false);
-  const [welcomeOpen, setWelcomeOpen] = useState(!welcomed);
   const [dragActive, setDragActive] = useState(false);
-  const [loadError, setLoadError] = useState<{ message: string; path?: string } | null>(null);
-
-  const dismissWelcome = useCallback(() => {
-    setWelcomeOpen(false);
-    setWelcomed(true);
-  }, [setWelcomed]);
-
-  const showWelcome = useCallback(() => {
-    setWelcomeOpen(true);
-  }, []);
-
-  const showHelp = useCallback(() => {
-    setHelpOpen(true);
-  }, []);
-
-  const showAbout = useCallback(() => {
-    setAboutOpen(true);
-  }, []);
-
-  const loadDemo = useCallback(() => {
-    setSource(DEMO_MARKDOWN);
-    setSavedContent(DEMO_MARKDOWN);
-    setActivePath(null);
-    setSaveStatus("idle");
-  }, [setActivePath]);
 
   const handleToggleSidebar = useCallback(() => {
     setSidebarOpen((v: boolean) => !v);
@@ -162,11 +153,6 @@ export function App() {
     }
   }, []);
 
-  const [recentFiles, setRecentFiles] = usePersistedState<string[]>(
-    STORAGE_KEYS.recentFiles,
-    [],
-  );
-
   const [readingMode, setReadingMode] = useState(false);
   const toggleReadingMode = useCallback(() => setReadingMode((v) => !v), []);
   const exitReadingMode = useCallback(() => setReadingMode(false), []);
@@ -187,26 +173,7 @@ export function App() {
     return () => window.cancelAnimationFrame(id);
   }, [readingMode]);
 
-  const [externalReloadToast, setExternalReloadToast] = useState(false);
-  const [externalConflict, setExternalConflict] = useState<string | null>(null);
-
-  // tiny "just copied!" pulse for the breadcrumb copy button + ambient toast
-  const [copyPulse, setCopyPulse] = useState(false);
-  const [copyToast, setCopyToast] = useState(false);
-  // toast shown after a successful save-as so the user knows where the file landed
-  const [saveAsToast, setSaveAsToast] = useState<string | null>(null);
-  const copyMarkdown = useCallback(async () => {
-    if (!source) return;
-    try {
-      await navigator.clipboard.writeText(source);
-      setCopyPulse(true);
-      setCopyToast(true);
-      window.setTimeout(() => setCopyPulse(false), 1200);
-      window.setTimeout(() => setCopyToast(false), 1600);
-    } catch (err) {
-      console.error("marka.md: copy failed", err);
-    }
-  }, [source]);
+  const copyMarkdown = useCallback(() => copyMarkdownCore(source), [copyMarkdownCore, source]);
 
   const debouncedPreview = useDebouncedValue(source, 50);
 
@@ -221,132 +188,13 @@ export function App() {
     return { words: w, minutes: m, docTokens: t };
   }, [source]);
 
-  const dirty = activePath != null && source !== savedContent;
-
-  const loadFile = useCallback(
-    async (path: string) => {
-      setLoadError(null);
-      const check = await validateMarkdownFile(path);
-      if (!check.ok) {
-        setLoadError({ message: check.reason, path });
-        console.warn("marka.md: refused to open", path, "·", check.reason);
-        return;
-      }
-      try {
-        const content = await readMarkdown(path);
-        setSource(content);
-        setSavedContent(content);
-        setActivePath(path);
-        setSaveStatus("idle");
-        // bump the file to the top of the recent list (dedupe, cap 8)
-        setRecentFiles((prev) => [path, ...prev.filter((p) => p !== path)].slice(0, 8));
-      } catch (err) {
-        console.error("marka.md: readMarkdown failed", err);
-        setLoadError({ message: String(err), path });
-      }
-    },
-    [setActivePath],
-  );
-
-  const saveNow = useCallback(
-    async (path: string, content: string) => {
-      setSaveStatus("saving");
-      try {
-        await writeMarkdown(path, content);
-        setSavedContent(content);
-        setSaveStatus("saved");
-        window.setTimeout(() => {
-          setSaveStatus((s: SaveStatus) => (s === "saved" ? "idle" : s));
-        }, SAVED_FLASH_MS);
-      } catch (err) {
-        console.error("marka.md: writeMarkdown failed", err);
-        setSaveStatus("dirty");
-      }
-    },
-    [],
-  );
-
+  // wraps useFileSession's saveAs to bump the sidebar tree + show landing toast.
   const saveAs = useCallback(async () => {
-    // suggest a default location: <rootPath>/untitled.md if a folder is open,
-    // else just "untitled.md" (dialog will land in the OS default folder)
-    const defaultPath = activePath
-      ?? (rootPath ? joinPath(rootPath, "untitled.md") : "untitled.md");
-    const target = await pickSaveMarkdown(defaultPath);
-    if (!target) return; // user cancelled — keep buffer dirty, no error
-    await saveNow(target, source);
-    setActivePath(target);
-    // refresh sidebar in case the file landed inside the currently-open root
+    const target = await saveAsCore();
+    if (!target) return;
     bumpTree();
-    // toast so user knows where the file landed
-    setSaveAsToast(`saved to ${basename(target)}`);
-    window.setTimeout(() => setSaveAsToast(null), 2400);
-  }, [activePath, rootPath, source, saveNow, setActivePath]);
-
-  // stable refs so handleExternalChange identity doesn't fluctuate with keystrokes.
-  const sourceRef = useRef(source);
-  const savedRef = useRef(savedContent);
-  useEffect(() => {
-    sourceRef.current = source;
-  }, [source]);
-  useEffect(() => {
-    savedRef.current = savedContent;
-  }, [savedContent]);
-
-  // stable dep set — watcher only rebinds when active file changes.
-  const handleExternalChange = useCallback(async () => {
-    if (!activePath) return;
-    try {
-      const fresh = await readMarkdown(activePath);
-      if (fresh === sourceRef.current) return; // mtime ticked but content identical — ignore
-      const dirty = sourceRef.current !== savedRef.current;
-      if (!dirty) {
-        setSource(fresh);
-        setSavedContent(fresh);
-        setExternalReloadToast(true);
-        window.setTimeout(() => setExternalReloadToast(false), 2400);
-      } else {
-        setExternalConflict(fresh);
-      }
-    } catch (err) {
-      console.error("marka.md: external change reload failed", err);
-    }
-  }, [activePath]);
-  useFileWatcher(activePath, handleExternalChange);
-
-  // mount-only: restore last open file from persisted activePath. eslint-disable below is intentional.
-  useEffect(() => {
-    if (!activePath) return; // no persisted file → demo content stays
-    let cancelled = false;
-    void (async () => {
-      try {
-        const exists = await pathExists(activePath);
-        if (cancelled) return;
-        if (exists) {
-          void loadFile(activePath);
-        } else {
-          setActivePath(null); // stale path — file deleted between sessions
-        }
-      } catch (err) {
-        console.warn("marka.md: session restore failed", err);
-        if (!cancelled) setActivePath(null);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // mark dirty as soon as content diverges from disk
-  useEffect(() => {
-    if (!activePath) {
-      setSaveStatus("idle");
-      return;
-    }
-    if (source !== savedContent) {
-      setSaveStatus((s: SaveStatus) => (s === "saving" ? s : "dirty"));
-    }
-  }, [source, savedContent, activePath]);
+    showSaveAsToast(`saved to ${basename(target)}`);
+  }, [saveAsCore, bumpTree, showSaveAsToast]);
 
   const handleOpenFolder = useCallback(async () => {
     const folder = await pickFolder();
@@ -364,166 +212,8 @@ export function App() {
   }, [loadFile]);
 
   const handleNewFile = useCallback(() => {
-    setSource("");
-    setSavedContent("");
-    setActivePath(null);
-    setSaveStatus("idle");
-    // focus the editor on next frame so users can start typing immediately
-    requestAnimationFrame(() => {
-      const editor = document.querySelector<HTMLElement>(".mdv-editor .cm-content");
-      editor?.focus();
-    });
-  }, [setActivePath]);
-
-  const handleMove = useCallback(
-    async (src: string, dstParent: string) => {
-      try {
-        const newPath = await moveEntry(src, dstParent);
-        pushUndo({ kind: "move", from: src, to: newPath });
-        bumpTree();
-        // if the moved file was the active one, keep editing the new path
-        if (activePath === src) setActivePath(newPath);
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        if (msg.includes(FS_CONFLICT)) {
-          const name = basename(src);
-          const target = joinPath(dstParent, name);
-          setLoadError({
-            message: `${name} already exists at the destination`,
-            path: target,
-          });
-        } else {
-          console.error("marka.md: move failed", err);
-          setLoadError({ message: `could not move ${basename(src)} — ${msg}` });
-        }
-      }
-    },
-    [activePath, bumpTree, pushUndo, setActivePath],
-  );
-
-  const handleContextMenu = useCallback((e: React.MouseEvent, entry: FileEntry) => {
-    setContextMenu({ x: e.clientX, y: e.clientY, path: entry.path, isDir: entry.isDir });
-  }, []);
-
-  const closeContextMenu = useCallback(() => setContextMenu(null), []);
-
-  const handleSubmitRename = useCallback(
-    async (src: string, newName: string) => {
-      setEditingPath(null);
-      try {
-        const newPath = await renameEntry(src, newName);
-        pushUndo({ kind: "rename", from: src, to: newPath });
-        bumpTree();
-        if (activePath === src) setActivePath(newPath);
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        if (msg.includes(FS_CONFLICT)) {
-          setLoadError({ message: `${newName} already exists in this folder` });
-        } else {
-          console.error("marka.md: rename failed", err);
-          setLoadError({ message: `could not rename — ${msg}` });
-        }
-      }
-    },
-    [activePath, bumpTree, pushUndo, setActivePath],
-  );
-
-  const handleSubmitNew = useCallback(
-    async (parent: string, kind: "file" | "folder", name: string) => {
-      setNewEntry(null);
-      try {
-        if (kind === "folder") {
-          const created = await createFolder(parent, name);
-          pushUndo({ kind: "create-folder", path: created });
-        } else {
-          const created = await createMarkdownFile(parent, name);
-          pushUndo({ kind: "create-file", path: created });
-          // open the new (empty) file in the editor
-          const content = await readMarkdown(created);
-          setSource(content);
-          setSavedContent(content);
-          setActivePath(created);
-          setSaveStatus("idle");
-        }
-        bumpTree();
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        if (msg.includes(FS_CONFLICT)) {
-          setLoadError({ message: `${name} already exists in this folder` });
-        } else {
-          console.error("marka.md: create failed", err);
-          setLoadError({ message: `could not create — ${msg}` });
-        }
-      }
-    },
-    [bumpTree, pushUndo, setActivePath],
-  );
-
-  const handleUndoFileOp = useCallback(async () => {
-    const op = undoStackRef.current.pop();
-    if (!op) return;
-    try {
-      if (op.kind === "move") {
-        // move-back across folders: target the original parent dir
-        await moveEntry(op.to, dirname(op.from));
-        if (activePath === op.to) setActivePath(op.from);
-        bumpTree();
-        return;
-      }
-      if (op.kind === "rename") {
-        // rename-back in the same folder
-        await renameEntry(op.to, basename(op.from));
-        if (activePath === op.to) setActivePath(op.from);
-        bumpTree();
-        return;
-      }
-      if (op.kind === "create-folder") {
-        // only delete if folder still empty (safety)
-        const entries = await listFolder(op.path);
-        if (entries.length > 0) {
-          setLoadError({ message: `can't undo — ${basename(op.path)} has content` });
-          return;
-        }
-        await removeEntry(op.path, true);
-        bumpTree();
-        return;
-      }
-      if (op.kind === "create-file") {
-        // only delete if file still empty (safety)
-        const content = await readMarkdown(op.path);
-        if (content.length > 0) {
-          setLoadError({ message: `can't undo — ${basename(op.path)} has been edited` });
-          return;
-        }
-        await removeEntry(op.path, false);
-        // if the just-deleted file was open in editor, clear
-        if (activePath === op.path) {
-          setSource("");
-          setSavedContent("");
-          setActivePath(null);
-          setSaveStatus("idle");
-        }
-        bumpTree();
-        return;
-      }
-    } catch (err) {
-      console.error("marka.md: undo failed", err);
-      setLoadError({ message: `could not undo — ${err instanceof Error ? err.message : err}` });
-    }
-  }, [activePath, bumpTree, setActivePath]);
-
-  // ⌥Z produces Ω on macOS — match e.code, not e.key.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const mod = e.metaKey || e.ctrlKey;
-      if (mod && e.altKey && !e.shiftKey && e.code === "KeyZ") {
-        e.preventDefault();
-        void handleUndoFileOp();
-      }
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [handleUndoFileOp]);
+    startNewBuffer();
+  }, [startNewBuffer]);
 
   const contextItems = useMemo<ContextMenuItem[]>(() => {
     if (!contextMenu) return [];
@@ -568,17 +258,13 @@ export function App() {
         void (async () => {
           try {
             await removeEntry(path, isDir);
-            // if the deleted file was active, clear the editor
+            // if the deleted file was active, clear the editor back to demo
             if (!isDir && activePath === path) {
-              setActivePath(null);
-              setSource(DEMO_MARKDOWN);
-              setSavedContent(DEMO_MARKDOWN);
+              loadDemo();
             }
             // if the deleted folder contained the active file, clear too
             if (isDir && activePath && activePath.startsWith(path + "/")) {
-              setActivePath(null);
-              setSource(DEMO_MARKDOWN);
-              setSavedContent(DEMO_MARKDOWN);
+              loadDemo();
             }
             bumpTree();
           } catch (err) {
@@ -606,45 +292,6 @@ export function App() {
       unlisten?.();
     };
   }, [loadFile]);
-
-  // check for updates once on launch (~1.5s after mount so the editor settles
-  // first). Tauri verifies the signature internally — anything not signed by
-  // our private updater key is rejected before the toast even appears.
-  useEffect(() => {
-    const timer = window.setTimeout(async () => {
-      const result = await checkForUpdate();
-      if (result.status === "available") {
-        setUpdateAvail({ version: result.version });
-      }
-    }, 1500);
-    return () => window.clearTimeout(timer);
-  }, []);
-
-  const handleApplyUpdate = useCallback(async () => {
-    if (updateInstalling) return;
-    setUpdateInstalling(true);
-    try {
-      await applyUpdate();
-      // process will relaunch — control rarely returns here
-    } catch (err) {
-      console.error("marka.md: update install failed", err);
-      setLoadError({
-        message: `couldn't install update — ${err instanceof Error ? err.message : err}`,
-      });
-      setUpdateInstalling(false);
-    }
-  }, [updateInstalling]);
-
-  const handleManualUpdateCheck = useCallback(async () => {
-    const result = await checkForUpdate();
-    if (result.status === "available") {
-      setUpdateAvail({ version: result.version });
-    } else if (result.status === "none") {
-      setUpdateUpToDate(true);
-    } else {
-      setLoadError({ message: `update check failed — ${result.message}` });
-    }
-  }, []);
 
   // OS drop. dragDropEnabled is OFF so Tauri doesn't intercept. counter guards
   // nested dragenter/leave firing multiple times.
@@ -695,10 +342,7 @@ export function App() {
         // WKWebView doesn't expose file path; load content as an untitled buffer.
         try {
           const text = await firstMd.text();
-          setSource(text);
-          setSavedContent(text);
-          setActivePath(null);
-          setSaveStatus("idle");
+          startNewBuffer(text);
         } catch (err) {
           console.error("marka.md: file drop read failed", err);
           setLoadError({ message: `could not read ${firstMd.name} — ${err}` });
@@ -949,7 +593,7 @@ export function App() {
       <Toast
         open={loadError != null}
         message={loadError?.message ?? ""}
-        onDismiss={() => setLoadError(null)}
+        onDismiss={dismissLoadError}
         action={
           loadError?.path
             ? {
@@ -972,14 +616,14 @@ export function App() {
         open={copyToast && loadError == null}
         message="copied to clipboard · paste anywhere"
         variant="info"
-        onDismiss={() => setCopyToast(false)}
+        onDismiss={dismissCopyToast}
       />
 
       <Toast
         open={saveAsToast != null && loadError == null}
         message={saveAsToast ?? ""}
         variant="info"
-        onDismiss={() => setSaveAsToast(null)}
+        onDismiss={dismissSaveAsToast}
       />
 
       <Toast
@@ -1010,7 +654,7 @@ export function App() {
         open={externalReloadToast && loadError == null}
         message="file changed externally · reloaded"
         variant="info"
-        onDismiss={() => setExternalReloadToast(false)}
+        onDismiss={dismissExternalReload}
       />
 
       <Toast
@@ -1024,7 +668,6 @@ export function App() {
           onClick: () => {
             if (externalConflict != null) {
               setSource(externalConflict);
-              setSavedContent(externalConflict);
             }
             setExternalConflict(null);
           },
