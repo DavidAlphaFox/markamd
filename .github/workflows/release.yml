@@ -73,6 +73,33 @@ jobs:
             echo "DIFF_URL=$DIFF_URL"
           } >> "$GITHUB_OUTPUT"
 
+      - name: resolve release body
+        id: release_body
+        shell: bash
+        env:
+          COMMITS: ${{ steps.changelog.outputs.COMMITS }}
+          DIFF_URL: ${{ steps.changelog.outputs.DIFF_URL }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          set -e
+          NOTES_FILE="docs/release-notes/${TAG_NAME}.md"
+          {
+            echo "BODY<<BODY_EOF"
+            if [ -f "$NOTES_FILE" ]; then
+              cat "$NOTES_FILE"
+            else
+              printf '# %s\n\n' "$TAG_NAME"
+              printf '## What changed\n\n%s\n\n%s\n\n' "$COMMITS" "$DIFF_URL"
+              printf '## Install\n\n'
+              printf '**macOS Apple Silicon**: `marka.md.dmg`\n'
+              printf '**macOS Intel**: `marka.md_intel.dmg`\n'
+              printf '**Windows**: `marka.md_*-setup.exe`\n'
+              printf '**Linux**: pick `.AppImage`, `.deb`, or `.rpm`\n\n'
+              printf 'Existing users on auto-update get this on next launch.\n'
+            fi
+            echo "BODY_EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: setup bun
         uses: oven-sh/setup-bun@v2
         with:
@@ -153,31 +180,7 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: "marka.md ${{ github.ref_name }}"
-          releaseBody: |
-            🐙 **marka.md ${{ github.ref_name }}** — macOS · Windows · Linux
-
-            ## what changed
-
-            ${{ steps.changelog.outputs.COMMITS }}
-
-            ${{ steps.changelog.outputs.DIFF_URL }}
-
-            ---
-
-            ## install
-
-            **macOS Apple Silicon** (notarized + auto-updating): `marka.md.dmg` → drag to `/Applications`
-            **macOS Intel** (notarized + auto-updating): `marka.md_intel.dmg` → drag to `/Applications`
-            **Windows**: `marka.md_*-setup.exe` → run (SmartScreen → "More info" → "Run anyway")
-            **Linux** 🐧: pick `.AppImage` (any distro), `.deb` (Debian/Ubuntu), or `.rpm` (Fedora/RHEL)
-
-            existing users on auto-update get this on next launch.
-
-            ## links
-
-            • [all releases](https://markamd.vercel.app/changelog) · [site](https://markamd.vercel.app) · [feedback](https://markamd.vercel.app/feedback) · [star the repo ⭐](https://github.com/mattenarle10/markamd)
-
-            — matt enarle · [mattenarle.com](https://mattenarle.com)
+          releaseBody: ${{ steps.release_body.outputs.BODY }}
           # publish as a DRAFT so the matrix runners can both upload artifacts
           # (including their per-platform latest.json entries) without racing
           # to overwrite each other on the same live release. the publish-release
