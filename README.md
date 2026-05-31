@@ -24,30 +24,13 @@ a cross-platform (**macOS · Windows · Linux**) markdown editor specialized for
 
 works with claude, chatgpt, gemini, local agents, and anything that reads plain markdown.
 
-## features
+## highlights
 
-- **live preview** — fast markdown rendering, shiki code highlighting, mermaid diagrams
-- **file tabs** — keep multiple notes open and switch quickly
-- **csv preview** — open `.csv` files as a capped, read-only table for quick data checks beside your notes
-- **grouped themes** — mono, catppuccin, crafted palettes, plus Claude / Codex / Gemini / Cursor-inspired themes
-- **reading mode** — ⌘. distraction-free preview with iA-style typography
-- **editor-only mode** — ⌘⇧. hide the preview when you want to focus on writing
-- **vim mode** — opt-in via the theme menu
-- **find** — ⌘f works in BOTH editor (codemirror) and reading mode (text-node walker w/ live highlights)
-- **command palette** — ⌘k, fuzzy + grouped
-- **ide-style sidebar** — drag-to-move, right-click rename / new / delete / copy path / reveal in file manager, ⌘⌥Z undo
-- **breadcrumb controls** — path, save state, reading mode, titlebar visibility, theme menu, and file actions in one compact row
-- **session restore** — last open file + folder come back on launch
-- **save as** — ⌘⇧s opens save-as dialog (also auto-fallback for untitled buffers)
-- **markdown extras** — `==highlight==` (mark), `~~strike~~`, `[ ] / [x]` task lists with theme-aware checkboxes
-- **share to ai** — ⌘⇧c copies clean markdown to clipboard
-- **context tray** — stage multiple sidebar files, see file/token counts, copy them as one prompt bundle
-- **export to pdf** — visible file-action button + ⌘p
-- **external file watch** — auto-reloads when the file changes outside the app · conflict toast on dirty buffer
-- **cross-platform auto-update** — minisign-signed releases on macOS / Windows / Linux
-- **window transparency slider** — continuous opacity, macOS vibrancy
-- **platform-aware shortcuts** — ⌘ on mac, Ctrl on Windows/Linux, surfaced correctly everywhere
-- **no autosave** — ⌘s commits. trust your fingers, not background daemons.
+- **markdown workspace** — live preview, shiki highlighting, mermaid diagrams, task lists, mark/strike syntax, reading mode, editor-only mode, and opt-in vim.
+- **ai context flow** — stage sidebar files, see file/token counts, and copy one AI-ready bundle with relative paths.
+- **project-like file handling** — tabs, folder sidebar, search, drag-to-move, undo file ops, copy paths, reveal in file manager, and useful dot-tool folders.
+- **data + export** — capped read-only CSV preview, rendered code copy buttons, mermaid-aware PDF export, and stable print margins.
+- **polished desktop app** — grouped themes, transparency controls, platform-aware shortcuts, session restore, external file watching, and signed auto-updates.
 
 ## install
 
@@ -118,36 +101,59 @@ shortcuts shown with **macOS** modifiers below. on **Windows / Linux**, substitu
 
 ## project structure
 
-- `src/components` — chrome, editor, files, overlays, and primitives
-- `src/hooks` — app state, file session, shortcuts, file watcher, sync scroll
-- `src/lib` — markdown, themes, files, commands, pdf export, updater, storage
-- `src/styles` — domain-scoped css for chrome, editor, files, overlays, shared UI
-- `src-tauri` — rust shell, capabilities, tauri config
-- `.github/workflows` — ci, release, dependabot
+```txt
+src/
+  components/   chrome, editor, sidebar, overlays, primitives
+  hooks/        app state, file session, shortcuts, file watching
+  lib/          markdown, themes, files, commands, pdf, updater
+  locales/      interface translations
+  styles/       domain-scoped css
+src-tauri/      Rust shell, capabilities, bundle config
+docs/           auto-update notes and release notes
+tests/          focused unit coverage for parsing/export/context behavior
+```
 
-folders export their public api via `index.ts`. path alias `@/*` resolves to `src/*`.
+`@/*` resolves to `src/*`. Public exports live in local `index.ts` files.
 
 ## roadmap
 
-per-release detail lives on the [changelog](https://markamd.vercel.app/changelog) (auto-fresh from GitHub releases). high-level:
+Per-release detail lives on the [changelog](https://markamd.vercel.app/changelog).
 
-**v1.5**:
-- **context tray** — multi-file bundling, ⌘-click to stage, token estimates, copy as one prompt blob
-- **what's new toast** — first launch after update now points users straight to the changelog
-- **pdf export polish** — cleaner document margins, no browser-added date/time/path headers, and rendered mermaid diagrams
-- **theme polish** — mono / mono dark, animated grouped theme menu, and AI-inspired Claude / Codex / Gemini / Cursor palettes
-- **file tabs + languages** — open multiple notes, switch between them quickly, and use the app in more interface languages
-- **code block wrapping** — long rendered code lines wrap in preview and PDF export
-- **macOS app naming + file handling** — packaged builds use `marka.md` consistently and default-handler launches open the selected markdown file reliably
-- **workflow polish** — copy absolute or root-relative paths, reveal files in Finder / Explorer / Linux file managers, and show useful dot-tool folders like `.github`, `.claude`, `.codex`, `.cursor`, and `.vscode`
+**Recent focus:** context tray, file tabs, CSV preview, grouped themes, interface languages, PDF/export polish, and file workflow improvements.
 
-**next**:
-- native/silent PDF generation, so export does not depend on the browser print dialog
-- optional richer context bundle presets for agents with stricter prompt formats
+**Next:** native/silent PDF generation and optional context bundle presets for agents with stricter prompt formats.
 
 ## contributors
 
-PRs are welcome. The best contributions are small, focused, and easy to test.
+Thanks to everyone helping shape marka.md through PRs, issues, testing, and feedback.
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/mattenarle10">
+        <img src="https://avatars.githubusercontent.com/u/89822774?v=4" width="56" height="56" alt="Matt Enarle" />
+        <br />
+        <sub><b>Matt Enarle</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/gzg1023">
+        <img src="https://avatars.githubusercontent.com/u/25383924?v=4" width="56" height="56" alt="gzg1023" />
+        <br />
+        <sub><b>gzg1023</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/hoiyada7-maker">
+        <img src="https://avatars.githubusercontent.com/u/256971142?v=4" width="56" height="56" alt="hoiyada7-maker" />
+        <br />
+        <sub><b>hoiyada7-maker</b></sub>
+      </a>
+    </td>
+  </tr>
+</table>
+
+PRs are welcome. Small, focused changes are easiest to review and ship.
 
 Good places to help:
 
@@ -163,8 +169,6 @@ Before opening a PR:
 - include screenshots for UI changes
 - update help/about/readme copy when the user-facing surface changes
 - run `bun test`, `bun run build`, and `cargo check --release` from `src-tauri`
-
-For larger ideas, open a feedback issue first so we can keep the app focused.
 
 ## privacy
 
