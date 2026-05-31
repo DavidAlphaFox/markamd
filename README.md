@@ -35,7 +35,8 @@ works with claude, chatgpt, gemini, local agents, and anything that reads plain 
 - **vim mode** — opt-in via the theme menu
 - **find** — ⌘f works in BOTH editor (codemirror) and reading mode (text-node walker w/ live highlights)
 - **command palette** — ⌘k, fuzzy + grouped
-- **ide-style sidebar** — drag-to-move, right-click rename / new / delete, ⌘⌥Z undo
+- **ide-style sidebar** — drag-to-move, right-click rename / new / delete / copy path / reveal in file manager, ⌘⌥Z undo
+- **breadcrumb controls** — path, save state, reading mode, titlebar visibility, theme menu, and file actions in one compact row
 - **session restore** — last open file + folder come back on launch
 - **save as** — ⌘⇧s opens save-as dialog (also auto-fallback for untitled buffers)
 - **markdown extras** — `==highlight==` (mark), `~~strike~~`, `[ ] / [x]` task lists with theme-aware checkboxes
@@ -138,6 +139,7 @@ per-release detail lives on the [changelog](https://markamd.vercel.app/changelog
 - **file tabs + languages** — open multiple notes, switch between them quickly, and use the app in more interface languages
 - **code block wrapping** — long rendered code lines wrap in preview and PDF export
 - **macOS app naming + file handling** — packaged builds use `marka.md` consistently and default-handler launches open the selected markdown file reliably
+- **workflow polish** — copy absolute or root-relative paths, reveal files in Finder / Explorer / Linux file managers, and show useful dot-tool folders like `.github`, `.claude`, `.codex`, `.cursor`, and `.vscode`
 
 **next**:
 - native/silent PDF generation, so export does not depend on the browser print dialog
