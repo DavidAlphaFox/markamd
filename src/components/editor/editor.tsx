@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 import { Compartment, EditorState } from "@codemirror/state";
 import { EditorView, keymap, lineNumbers, highlightActiveLine, drawSelection } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
@@ -32,6 +32,8 @@ type EditorProps = {
   vimOn?: boolean;
   /** fired when vim mode changes; null when vim is off (#23) */
   onVimMode?: (mode: "normal" | "insert" | "visual" | "replace" | null) => void;
+  /** shared ref populated with the EditorView once it mounts */
+  viewRef?: RefObject<EditorView | null>;
 };
 
 function buildTheme() {
@@ -86,7 +88,7 @@ function buildTheme() {
   );
 }
 
-export function Editor({ value, onChange, vimOn = false, onVimMode }: EditorProps) {
+export function Editor({ value, onChange, vimOn = false, onVimMode, viewRef: externalViewRef }: EditorProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
@@ -124,10 +126,12 @@ export function Editor({ value, onChange, vimOn = false, onVimMode }: EditorProp
 
     const view = new EditorView({ state, parent: hostRef.current });
     viewRef.current = view;
+    if (externalViewRef) externalViewRef.current = view;
 
     return () => {
       view.destroy();
       viewRef.current = null;
+      if (externalViewRef) externalViewRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

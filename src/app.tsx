@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { EditorView } from "@codemirror/view";
 import { Breadcrumb, StatusBar, TitleBar, type VimMode } from "@/components/chrome";
 import { Editor, OpenTabs, Preview, ReadingFind, Splitter } from "@/components/editor";
 import { ContextMenu, Sidebar, type ContextMenuItem } from "@/components/files";
@@ -13,6 +14,7 @@ import {
   useNotifications,
   useOverlays,
   usePersistedState,
+  useSelectionSyncText,
   useShortcuts,
   useSyncScroll,
   useUpdateFlow,
@@ -395,6 +397,9 @@ export function App() {
 
   // proportional editor <-> preview scroll sync; rebinds when active file changes
   useSyncScroll({ rebindKey: activePath ?? "untitled" });
+
+  const editorViewRef = useRef<EditorView | null>(null);
+  useSelectionSyncText(editorViewRef, activePath ?? "untitled");
 
   const { words, minutes, docTokens } = useMemo(() => {
     const trimmed = source.trim();
@@ -864,10 +869,11 @@ export function App() {
                 activeTabId={activeTabId}
                 onSelect={switchTab}
                 onClose={handleCloseTab}
+                onContextMenu={(e, path) => handleContextMenu(e, { path, name: basename(path), isDir: false })}
               />
               {editorOnly ? (
                 <div className="mdv-shell__editor-solo">
-                  <Editor value={source} onChange={setSource} vimOn={vimOn} onVimMode={setVimMode} />
+                  <Editor value={source} onChange={setSource} vimOn={vimOn} onVimMode={setVimMode} viewRef={editorViewRef} />
                 </div>
               ) : (
                 <Splitter

@@ -74,7 +74,7 @@ export function relativePath(path: string, rootPath: string | null): string {
 export async function listFolder(path: string): Promise<FileEntry[]> {
   const entries = await readDir(path);
   return (entries || [])
-    .filter((e) => e?.name && isVisibleTreeEntryName(e.name))
+    .filter((e) => e?.name)
     .map((e) => ({
       name: e.name,
       path: joinPath(path, e.name),
