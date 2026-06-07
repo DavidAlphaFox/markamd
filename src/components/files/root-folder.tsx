@@ -130,7 +130,7 @@ export function RootFolder({
           onSubmitNew={onSubmitNew}
           onCancelNew={onCancelNew}
           treeVersion={treeVersion}
-          depth={1}
+          depth={0}
         />
       ) : null}
     </section>

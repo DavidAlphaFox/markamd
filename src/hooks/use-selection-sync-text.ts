@@ -1,92 +1,108 @@
 import { useEffect, type RefObject } from "react";
+import { EditorSelection } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 
-function findTextInDOM(root: HTMLElement, text: string): Range | null {
-  if (!text || !text.trim()) return null;
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+function textNodesWithin(root: HTMLElement): Text[] {
+  const walker = document.createTreeWalker(
+    root,
+    NodeFilter.SHOW_TEXT,
+    {
+      acceptNode(node) {
+        const parent = node.parentElement;
+        if (!parent) return NodeFilter.FILTER_REJECT;
+        if (parent.closest(".mdv-copy")) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      },
+    },
+  );
   const nodes: Text[] = [];
-  let n: Node | null;
-  while ((n = walker.nextNode())) nodes.push(n as Text);
+  let node: Node | null;
+  while ((node = walker.nextNode())) nodes.push(node as Text);
+  return nodes;
+}
 
-  const fullText = nodes.map((tn) => tn.textContent ?? "").join("");
-  const idx = fullText.indexOf(text);
-  if (idx < 0) return null;
+function findTextInDom(root: HTMLElement, text: string): Range | null {
+  const needle = text.trim();
+  if (!needle) return null;
 
-  let pos = 0;
+  const nodes = textNodesWithin(root);
+  const fullText = nodes.map((node) => node.textContent ?? "").join("");
+  const index = fullText.indexOf(needle);
+  if (index < 0) return null;
+
+  let position = 0;
   let startNode: Text | null = null;
-  let startOff = 0;
+  let startOffset = 0;
   let endNode: Text | null = null;
-  let endOff = 0;
+  let endOffset = 0;
 
-  for (const tn of nodes) {
-    const len = tn.textContent?.length ?? 0;
-    if (!startNode && pos + len > idx) {
-      startNode = tn;
-      startOff = idx - pos;
+  for (const node of nodes) {
+    const length = node.textContent?.length ?? 0;
+    if (!startNode && position + length > index) {
+      startNode = node;
+      startOffset = index - position;
     }
-    if (!endNode && pos + len >= idx + text.length) {
-      endNode = tn;
-      endOff = idx + text.length - pos;
+    if (!endNode && position + length >= index + needle.length) {
+      endNode = node;
+      endOffset = index + needle.length - position;
       break;
     }
-    pos += len;
+    position += length;
   }
 
   if (!startNode || !endNode) return null;
   const range = document.createRange();
-  range.setStart(startNode, startOff);
-  range.setEnd(endNode, endOff);
+  range.setStart(startNode, startOffset);
+  range.setEnd(endNode, endOffset);
   return range;
 }
 
-/**
- * Bidirectional text-selection sync between the editor and preview.
- *
- * - mouseup in preview → find selected text in the markdown source → set CM selection
- * - mouseup in editor  → find selected text in the preview DOM → set browser selection
- */
+function selectionText(selection: Selection): string {
+  return selection.toString().trim();
+}
+
 export function useSelectionSyncText(
   viewRef: RefObject<EditorView | null>,
   rebindKey?: unknown,
 ): void {
   useEffect(() => {
     const onMouseUp = () => {
-      const sel = window.getSelection();
-      if (!sel || sel.isCollapsed) return;
-      const text = sel.toString();
-      if (!text.trim()) return;
+      const selection = window.getSelection();
+      if (!selection || selection.isCollapsed) return;
+
+      const text = selectionText(selection);
+      if (!text) return;
 
       const prose = document.querySelector<HTMLElement>(".mdv-prose");
       const editorContent = document.querySelector<HTMLElement>(".mdv-editor .cm-content");
-      const anchor = sel.anchorNode;
+      const anchor = selection.anchorNode;
+      if (!anchor) return;
 
-      if (prose && anchor && prose.contains(anchor)) {
-        // Preview → Editor
+      if (prose?.contains(anchor)) {
         const view = viewRef.current;
         if (!view) return;
-        const src = view.state.doc.toString();
-        const idx = src.indexOf(text);
-        if (idx < 0) return;
+        const index = view.state.doc.toString().indexOf(text);
+        if (index < 0) return;
+
+        const range = EditorSelection.range(index, index + text.length);
         view.dispatch({
-          selection: { anchor: idx, head: idx + text.length },
-          effects: EditorView.scrollIntoView(idx, { y: "center" }),
+          selection: EditorSelection.create([range]),
+          effects: EditorView.scrollIntoView(range, { y: "center" }),
         });
+        view.focus();
         return;
       }
 
-      if (editorContent && anchor && editorContent.contains(anchor)) {
-        // Editor → Preview
-        if (!prose) return;
-        const range = findTextInDOM(prose, text);
+      if (editorContent?.contains(anchor) && prose) {
+        const range = findTextInDom(prose, text);
         if (!range) return;
-        const domSel = window.getSelection();
-        if (domSel) {
-          domSel.removeAllRanges();
-          domSel.addRange(range);
-          // scroll the matched element into view
-          const el = range.startContainer.parentElement;
-          el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-        }
+
+        selection.removeAllRanges();
+        selection.addRange(range);
+        range.startContainer.parentElement?.scrollIntoView({
+          block: "nearest",
+          behavior: "smooth",
+        });
       }
     };
 

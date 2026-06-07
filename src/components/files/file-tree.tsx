@@ -77,18 +77,14 @@ export function FileTree({
   if (!entries) {
     return <div className="mdv-tree__loading">loading…</div>;
   }
-  if (entries.length === 0 && depth <= 1 && !(newEntry && newEntry.parent === rootPath)) {
+  if (entries.length === 0 && depth === 0 && !(newEntry && newEntry.parent === rootPath)) {
     return <div className="mdv-tree__empty">empty folder</div>;
   }
 
   const showNewEntryHere = newEntry && newEntry.parent === rootPath;
 
   return (
-    <ul
-      className="mdv-tree"
-      role={depth === 0 ? "tree" : "group"}
-      style={depth > 0 ? ({ "--tree-depth": depth } as React.CSSProperties) : undefined}
-    >
+    <ul className="mdv-tree" role={depth === 0 ? "tree" : "group"}>
       {showNewEntryHere && newEntry && onSubmitNew && onCancelNew ? (
         <EditableRow
           key="__new__"

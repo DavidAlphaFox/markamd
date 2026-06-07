@@ -32,7 +32,7 @@ type EditorProps = {
   vimOn?: boolean;
   /** fired when vim mode changes; null when vim is off (#23) */
   onVimMode?: (mode: "normal" | "insert" | "visual" | "replace" | null) => void;
-  /** shared ref populated with the EditorView once it mounts */
+  /** optional shared ref for features that need the mounted CodeMirror view */
   viewRef?: RefObject<EditorView | null>;
 };
 
