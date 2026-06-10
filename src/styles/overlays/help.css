@@ -179,7 +179,13 @@
   letter-spacing: 0.02em;
 }
 
-.mdv-help__replay {
+.mdv-help__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mdv-help__action {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -196,9 +202,14 @@
     color var(--dur-fast) var(--easing);
 }
 
-.mdv-help__replay:hover {
+.mdv-help__action:hover:not(:disabled) {
   background: var(--accent);
   color: #fff;
+}
+
+.mdv-help__action:disabled {
+  cursor: progress;
+  opacity: 0.65;
 }
 
 @media (max-width: 760px) {
@@ -213,5 +224,9 @@
   .mdv-help__footer {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .mdv-help__actions {
+    flex-wrap: wrap;
   }
 }
