@@ -44,17 +44,16 @@ function buildTheme() {
         backgroundColor: "transparent",
         color: "var(--fg)",
         fontFamily: "var(--font-mono)",
-        fontSize: "var(--mdv-writing-font-size)",
+        fontSize: "14px",
       },
       ".cm-scroller": {
         fontFamily: "var(--font-mono)",
-        lineHeight: "var(--mdv-writing-line-height)",
+        lineHeight: "1.55",
         padding: "20px 28px 80px",
       },
       ".cm-content": {
         caretColor: "var(--accent)",
-        maxWidth: "var(--mdv-writing-width)",
-        marginInline: "var(--mdv-writing-margin-inline)",
+        maxWidth: "780px",
       },
       ".cm-cursor, .cm-dropCursor": {
         borderLeftColor: "var(--accent)",

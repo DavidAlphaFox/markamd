@@ -13,16 +13,7 @@ import {
   PanelTopOpen,
 } from "lucide-react";
 import { Button, Icon } from "@/components/primitives";
-import {
-  shortcutLabel,
-  startWindowDrag,
-  useI18n,
-  type Translate,
-  type WritingDisplay,
-  type WritingFontSize,
-  type WritingLineHeight,
-  type WritingWidth,
-} from "@/lib";
+import { shortcutLabel, startWindowDrag, useI18n, type Translate } from "@/lib";
 import { ThemeButton } from "./theme-button";
 import exciteUrl from "@/assets/mascot/excite.png";
 
@@ -46,12 +37,6 @@ type BreadcrumbProps = {
   onToggleReading: () => void;
   vimOn?: boolean;
   onToggleVim?: () => void;
-  writingDisplay: WritingDisplay;
-  onWritingWidthChange: (value: WritingWidth) => void;
-  onWritingFontSizeChange: (value: WritingFontSize) => void;
-  onWritingLineHeightChange: (value: WritingLineHeight) => void;
-  onWritingCenteredChange: (value: boolean) => void;
-  onResetWritingDisplay: () => void;
 };
 
 const MAX_SEGMENTS = 4;
@@ -93,12 +78,6 @@ export function Breadcrumb({
   onToggleReading,
   vimOn,
   onToggleVim,
-  writingDisplay,
-  onWritingWidthChange,
-  onWritingFontSizeChange,
-  onWritingLineHeightChange,
-  onWritingCenteredChange,
-  onResetWritingDisplay,
 }: BreadcrumbProps) {
   const { t } = useI18n();
   const path = activePath ?? rootPath;
@@ -180,16 +159,7 @@ export function Breadcrumb({
           onClick={onToggleReading}
           icon={<Icon icon={readingMode ? BookOpen : BookOpen} size={14} strokeWidth={1.5} />}
         />
-        <ThemeButton
-          vimOn={vimOn}
-          onToggleVim={onToggleVim}
-          writingDisplay={writingDisplay}
-          onWritingWidthChange={onWritingWidthChange}
-          onWritingFontSizeChange={onWritingFontSizeChange}
-          onWritingLineHeightChange={onWritingLineHeightChange}
-          onWritingCenteredChange={onWritingCenteredChange}
-          onResetWritingDisplay={onResetWritingDisplay}
-        />
+        <ThemeButton vimOn={vimOn} onToggleVim={onToggleVim} />
 
         {/* file actions — border-left matches the status→actions separator */}
         <div className="mdv-breadcrumb__file-actions">
