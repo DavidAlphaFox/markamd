@@ -121,6 +121,18 @@ const md = new MarkdownIt({
 md.use(taskLists, { enabled: false, label: true });
 md.use(mark);
 
+// stamp block tokens with their source line range so the preview DOM can be
+// mapped back to exact positions in the markdown source (selection sync)
+md.core.ruler.push("source_lines", (state) => {
+  for (const token of state.tokens) {
+    if (token.map && token.nesting !== -1) {
+      token.attrSet("data-sline", String(token.map[0]));
+      token.attrSet("data-eline", String(token.map[1]));
+    }
+  }
+  return true;
+});
+
 // GitHub-style heading slugs for TOC anchor navigation
 const slugify = (text: string): string =>
   text
