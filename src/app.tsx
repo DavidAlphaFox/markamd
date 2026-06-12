@@ -144,6 +144,10 @@ export function App() {
     STORAGE_KEYS.favorites,
     [],
   );
+  const [pinnedFiles, setPinnedFiles] = usePersistedState<string[]>(
+    STORAGE_KEYS.pinnedFiles,
+    [],
+  );
   const didHydrateFoldersRef = useRef(false);
 
   // migrate the legacy single-folder session into the multi-folder list,
@@ -187,6 +191,19 @@ export function App() {
       prev.includes(path) ? prev.filter((p) => p !== path) : [...prev, path],
     );
   }, [setFavorites]);
+
+  const addPinnedFile = useCallback((path: string) => {
+    setPinnedFiles((prev) => prev.includes(path) ? prev : [...prev, path]);
+  }, [setPinnedFiles]);
+
+  const removePinnedFile = useCallback((path: string) => {
+    setPinnedFiles((prev) => prev.filter((p) => p !== path));
+  }, [setPinnedFiles]);
+
+  const handleAddFile = useCallback(async () => {
+    const file = await pickMarkdownFile();
+    if (file) addPinnedFile(file);
+  }, [pickMarkdownFile, addPinnedFile]);
 
   const reorderFavorites = useCallback((from: number, to: number) => {
     setFavorites((prev) => {
@@ -571,83 +588,40 @@ export function App() {
     };
   }, [loadFile]);
 
-  // OS drop. dragDropEnabled is OFF so Tauri doesn't intercept. counter guards
-  // nested dragenter/leave firing multiple times.
+  // OS drop via Tauri events (dragDropEnabled: true).
+  // Tauri intercepts file drags before the browser sees them, giving us real file paths.
   useEffect(() => {
-    let enterCount = 0;
+    type DragPayload = { paths: string[] };
+    let unlistenEnter: (() => void) | undefined;
+    let unlistenDrop: (() => void) | undefined;
+    let unlistenLeave: (() => void) | undefined;
 
-    const isOsFileDrag = (e: DragEvent) => {
-      if (!e.dataTransfer) return false;
-      // never engage on in-app sidebar drags
-      if (e.dataTransfer.types.includes("application/x-marka-path")) return false;
-      return e.dataTransfer.types.includes("Files");
-    };
+    void listen<DragPayload>("tauri://drag-enter", () => {
+      setDragActive(true);
+    }).then((ul) => { unlistenEnter = ul; });
 
-    const reset = () => {
-      enterCount = 0;
+    void listen<DragPayload>("tauri://drag-drop", (event) => {
       setDragActive(false);
-    };
-
-    const onDragEnter = (e: DragEvent) => {
-      if (!isOsFileDrag(e)) return;
-      enterCount += 1;
-      if (enterCount === 1) setDragActive(true);
-    };
-
-    const onDragOver = (e: DragEvent) => {
-      if (!isOsFileDrag(e)) return;
-      e.preventDefault();
-      if (e.dataTransfer) e.dataTransfer.dropEffect = "copy";
-    };
-
-    const onDragLeave = (e: DragEvent) => {
-      if (!isOsFileDrag(e)) return;
-      enterCount = Math.max(0, enterCount - 1);
-      if (enterCount === 0) setDragActive(false);
-    };
-
-    const onDrop = async (e: DragEvent) => {
-      if (!isOsFileDrag(e)) {
-        // safety: any drop that lands on window resets state
-        reset();
-        return;
-      }
-      e.preventDefault();
-      reset();
-      const files = Array.from(e.dataTransfer?.files ?? []);
-      const firstSupported = files.find((f) => isSupportedTextPath(f.name));
+      const paths = event.payload.paths ?? [];
+      const firstSupported = paths.find((p) => isSupportedTextPath(p));
       if (firstSupported) {
-        // WKWebView doesn't expose file path; load content as an untitled buffer.
-        try {
-          const text = await firstSupported.text();
-          startNewBuffer(text);
-        } catch (err) {
-          console.error("marka.md: file drop read failed", err);
-          setLoadError({ message: `could not read ${firstSupported.name} — ${err}` });
-        }
-      } else if (files.length > 0) {
-        setLoadError({
-          message: t("app.dropMarkdownOnly"),
-        });
+        addPinnedFile(firstSupported);
+        void loadFile(firstSupported);
+      } else if (paths.length > 0) {
+        setLoadError({ message: t("app.dropMarkdownOnly") });
       }
-    };
+    }).then((ul) => { unlistenDrop = ul; });
 
-    window.addEventListener("dragenter", onDragEnter);
-    window.addEventListener("dragover", onDragOver);
-    window.addEventListener("dragleave", onDragLeave);
-    window.addEventListener("drop", onDrop);
-    // safety: any of these end the drag for sure — keeps state from sticking
-    window.addEventListener("dragend", reset);
-    window.addEventListener("blur", reset);
+    void listen("tauri://drag-leave", () => {
+      setDragActive(false);
+    }).then((ul) => { unlistenLeave = ul; });
+
     return () => {
-      window.removeEventListener("dragenter", onDragEnter);
-      window.removeEventListener("dragover", onDragOver);
-      window.removeEventListener("dragleave", onDragLeave);
-      window.removeEventListener("drop", onDrop);
-      window.removeEventListener("dragend", reset);
-      window.removeEventListener("blur", reset);
+      unlistenEnter?.();
+      unlistenDrop?.();
+      unlistenLeave?.();
     };
-  }, [setLoadError, startNewBuffer, t]);
+  }, [addPinnedFile, loadFile, setLoadError, t]);
 
   const shortcuts = useMemo(
     () => ({
@@ -895,6 +869,10 @@ export function App() {
               onReorderFavorites={reorderFavorites}
               onCopyContext={() => void copyContextBundle()}
               onClearContext={clearContextBundle}
+              pinnedFiles={pinnedFiles}
+              onAddFile={() => void handleAddFile()}
+              onRemovePinnedFile={removePinnedFile}
+              onAddPinnedFile={addPinnedFile}
               editingPath={editingPath}
               onSubmitRename={handleSubmitRename}
               onCancelEdit={() => setEditingPath(null)}

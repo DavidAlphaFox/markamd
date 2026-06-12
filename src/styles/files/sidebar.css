@@ -581,7 +581,7 @@
   font-family: var(--font-mono);
   font-size: 9px;
   letter-spacing: 0.08em;
-  text-transform: uppercase;
+  text-transform: lowercase;
   color: var(--muted);
 }
 
@@ -677,7 +677,7 @@
   font-size: 11px;
   letter-spacing: 0.04em;
   font-weight: 600;
-  text-transform: uppercase;
+  text-transform: lowercase;
   color: var(--muted);
 }
 
@@ -789,4 +789,32 @@
 /* favorites reorder drop indicator */
 .mdv-tree__item.is-fav-over .mdv-tree__row {
   box-shadow: inset 0 2px 0 var(--accent);
+}
+
+/* pinned files section */
+.mdv-pinned-files.is-drop {
+  background: color-mix(in srgb, var(--accent) 5%, transparent);
+}
+
+.mdv-pinned-files__drop-zone {
+  margin: 2px 8px 6px;
+  padding: 10px 12px;
+  border: 1px dashed color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: 6px;
+  transition:
+    border-color var(--dur-fast) var(--easing),
+    background var(--dur-fast) var(--easing);
+}
+
+.mdv-pinned-files__drop-zone.is-over {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.mdv-pinned-files__drop-hint {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--muted);
+  line-height: 1.4;
 }

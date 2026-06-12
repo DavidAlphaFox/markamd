@@ -29,6 +29,9 @@ export function Favorites({
   const [open, setOpen] = useState(true);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
+  const [dropOver, setDropOver] = useState(false);
+
+  const DRAG_MIME = "application/x-marka-path";
 
   return (
     <section className="mdv-rootfolder mdv-favorites">
@@ -49,7 +52,25 @@ export function Favorites({
       </div>
       {open ? (
         favorites.length === 0 ? (
-          <p className="mdv-favorites__empty">{emptyLabel}</p>
+          <div
+            className={`mdv-pinned-files__drop-zone${dropOver ? " is-over" : ""}`}
+            onDragOver={(e) => {
+              if (!e.dataTransfer.types.includes(DRAG_MIME)) return;
+              e.preventDefault();
+              e.dataTransfer.dropEffect = "link";
+              setDropOver(true);
+            }}
+            onDragLeave={() => setDropOver(false)}
+            onDrop={(e) => {
+              const src = e.dataTransfer.getData(DRAG_MIME);
+              if (!src) { setDropOver(false); return; }
+              e.preventDefault();
+              setDropOver(false);
+              onToggleFavorite(src);
+            }}
+          >
+            <span className="mdv-pinned-files__drop-hint">{emptyLabel}</span>
+          </div>
         ) : (
           <ul className="mdv-tree">
             {favorites.map((path, i) => (

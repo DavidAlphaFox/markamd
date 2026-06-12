@@ -16,6 +16,7 @@ export const STORAGE_KEYS = {
   favorites: "mdview.favorites",
   writingFontSize: "mdview.writing.fontSize",
   writingLineHeight: "mdview.writing.lineHeight",
+  pinnedFiles: "mdview.pinnedFiles",
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
