@@ -4,13 +4,12 @@ use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial, NSVisualEffectStat
 use std::sync::Mutex;
 use tauri::State;
 
-// `Manager` powers `_app.get_webview_window` in the macOS setup block,
-// `Emitter` powers the file-open event below, and `RunEvent::Opened` is a
-// macOS-only enum variant (Finder "Open With" file association). Gating the
-// whole `use` line lets the crate compile on Windows + Linux where the
-// variant doesn't exist.
+// `Emitter` and `Manager` are used by both the single-instance callback (all
+// platforms) and the macOS Finder open-with handler. `RunEvent::Opened` is
+// macOS-only, so it stays gated.
+use tauri::{Emitter, Manager};
 #[cfg(target_os = "macos")]
-use tauri::{Emitter, Manager, RunEvent};
+use tauri::RunEvent;
 
 struct PendingOpenFiles(Mutex<Vec<String>>);
 
@@ -82,6 +81,31 @@ pub fn run() {
 
     let app = tauri::Builder::default()
         .manage(PendingOpenFiles(Mutex::new(pending_open_files)))
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            // A second instance was launched — forward any markdown file args
+            // to the running instance, then bring its window to front.
+            let paths: Vec<String> = args
+                .iter()
+                .skip(1) // skip argv[0] (executable path)
+                .filter_map(|arg| {
+                    let path = std::path::PathBuf::from(arg);
+                    let ext = path.extension()?.to_str()?.to_ascii_lowercase();
+                    if path.is_file() && matches!(ext.as_str(), "md" | "markdown" | "mdx") {
+                        Some(path.to_string_lossy().to_string())
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+            for path in paths {
+                let _ = app.emit("marka:open-file", path);
+            }
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+                let _ = window.unminimize();
+                let _ = window.set_focus();
+            }
+        }))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
