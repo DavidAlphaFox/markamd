@@ -40,8 +40,11 @@ works with claude, chatgpt, gemini, local agents, and anything that reads plain 
 
 ### macOS
 
+- **homebrew**: `brew install --cask mattenarle10/tap/marka-md`
 - **apple silicon** (M1/M2/M3/M4): grab `marka.md.dmg` → drag **marka.md.app** into `/Applications` → open.
 - **intel mac**: grab `marka.md_intel.dmg` → same install steps.
+
+Homebrew users can update with `brew update && brew upgrade --cask marka-md`. The in-app signed updater still works too.
 
 ### Windows (10+, x64)
 
