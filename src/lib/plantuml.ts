@@ -50,7 +50,7 @@ export function decoratePlantUmlBlocks(
     const onLoad = () => {
       const existing = block.querySelector<HTMLImageElement>("img");
       if (existing) {
-        setupViewer(block, existing, url, cleanups, onOpen, labels);
+        setupViewerWhenLoaded(block, existing, url, cleanups, onOpen, labels);
         return;
       }
       const img = document.createElement("img");
@@ -61,7 +61,7 @@ export function decoratePlantUmlBlocks(
       img.src = url;
       block.appendChild(img);
       load.textContent = "reload preview";
-      setupViewer(block, img, url, cleanups, onOpen, labels);
+      setupViewerWhenLoaded(block, img, url, cleanups, onOpen, labels);
     };
 
     load.addEventListener("click", onLoad);
@@ -73,6 +73,24 @@ export function decoratePlantUmlBlocks(
   });
 
   return () => cleanups.forEach((fn) => fn());
+}
+
+function setupViewerWhenLoaded(
+  block: HTMLElement,
+  img: HTMLImageElement,
+  url: string,
+  cleanups: Array<() => void>,
+  onOpen?: (viewer: PlantUmlViewerSource) => void,
+  labels?: PlantUmlViewerLabels,
+): void {
+  if (img.complete && img.naturalWidth > 0) {
+    setupViewer(block, img, url, cleanups, onOpen, labels);
+    return;
+  }
+
+  const onImageLoad = () => setupViewer(block, img, url, cleanups, onOpen, labels);
+  img.addEventListener("load", onImageLoad, { once: true });
+  cleanups.push(() => img.removeEventListener("load", onImageLoad));
 }
 
 function setupViewer(
