@@ -111,6 +111,7 @@ export function App() {
     activeTabId,
     switchTab,
     closeTab,
+    reorderTabs,
     rootPath,
     setRootPath,
     saveStatus,
@@ -177,12 +178,10 @@ export function App() {
     if (activePath && isPathWithin(activePath, path)) {
       startNewBuffer();
     }
-    setFavorites((prev) => prev.filter((favorite) => !isPathWithin(favorite, path)));
   }, [
     activePath,
     folders,
     isPathWithin,
-    setFavorites,
     setFolders,
     setRootPath,
     startNewBuffer,
@@ -307,7 +306,8 @@ export function App() {
 
   const exportToPdf = useCallback(async () => {
     try {
-      await exportPreviewToPdf({ source, activePath });
+      const documentName = tabs.find((tab) => tab.id === activeTabId)?.title;
+      await exportPreviewToPdf({ source, activePath, documentName });
     } catch (err) {
       const message = err instanceof PdfExportError
         ? err.message
@@ -315,7 +315,7 @@ export function App() {
       console.error("marka.md: pdf export failed", err);
       setLoadError({ message });
     }
-  }, [source, activePath, setLoadError, t]);
+  }, [source, activePath, tabs, activeTabId, setLoadError, t]);
 
 
   const toggleFullscreen = useCallback(async () => {
@@ -434,6 +434,14 @@ export function App() {
   useEffect(() => {
     setStagedPaths([]);
   }, [rootPath]);
+
+  // Keep the webview document title in sync with the active file. On Windows the
+  // native Ctrl+P prints the app window, and the browser derives the save-as-PDF
+  // default name from document.title — so this drives the exported file name.
+  useEffect(() => {
+    const tabTitle = tabs.find((tab) => tab.id === activeTabId)?.title;
+    document.title = (tabTitle ?? "untitled").replace(/\.md$/i, "");
+  }, [tabs, activeTabId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -905,6 +913,7 @@ export function App() {
                 activeTabId={activeTabId}
                 onSelect={switchTab}
                 onClose={handleCloseTab}
+                onReorder={reorderTabs}
                 onContextMenu={(e, path) => handleContextMenu(e, { path, name: basename(path), isDir: false })}
               />
               {editorOnly ? (

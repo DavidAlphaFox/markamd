@@ -619,6 +619,10 @@
   border-top: none;
 }
 
+.mdv-favorites .mdv-tree::before {
+  display: none;
+}
+
 .mdv-rootfolder__header {
   display: flex;
   align-items: center;
