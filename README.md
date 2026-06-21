@@ -113,6 +113,8 @@ Per-release detail lives on the [changelog](https://markamd.vercel.app/changelog
 - [ ] next: native/silent PDF generation
 - [ ] next: context handoff presets for bring-your-own-ai workflows, starting with markdown and XML-tag bundle formats
 
+Release work follows the [release checklist](docs/release-checklist.md), including the post-release site refresh check.
+
 ## contributors
 
 Thanks to everyone helping shape marka.md through PRs, issues, testing, and feedback.
