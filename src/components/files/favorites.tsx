@@ -53,7 +53,7 @@ export function Favorites({
       {open ? (
         favorites.length === 0 ? (
           <div
-            className={`mdv-pinned-files__drop-zone${dropOver ? " is-over" : ""}`}
+            className={`mdv-favorites__drop-zone${dropOver ? " is-over" : ""}`}
             onDragOver={(e) => {
               if (!e.dataTransfer.types.includes(DRAG_MIME)) return;
               e.preventDefault();
@@ -69,7 +69,7 @@ export function Favorites({
               onToggleFavorite(src);
             }}
           >
-            <span className="mdv-pinned-files__drop-hint">{emptyLabel}</span>
+            <span className="mdv-favorites__drop-hint">{emptyLabel}</span>
           </div>
         ) : (
           <ul className="mdv-tree">
@@ -94,6 +94,7 @@ export function Favorites({
                     setDragIndex(i);
                     e.dataTransfer.effectAllowed = "move";
                     // some browsers require data to be set for drag to start
+                    e.dataTransfer.setData(DRAG_MIME, path);
                     e.dataTransfer.setData("text/plain", path);
                   }}
                   onDragOver={(e) => {

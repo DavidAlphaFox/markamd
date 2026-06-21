@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon, Kbd, Overlay } from "@/components/primitives";
-import { shortcutLabel, useI18n, type Translate } from "@/lib";
+import { filterAndRankCommands, shortcutLabel, useI18n, type Translate } from "@/lib";
 import { CATEGORY_ORDER, type Command, type CommandCategory } from "@/lib/commands";
 
 export type { Command };
@@ -59,12 +59,7 @@ export function CommandPalette({ open, onClose, commands }: CommandPaletteProps)
   const listRef = useRef<HTMLUListElement>(null);
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return commands;
-    return commands.filter((c) => {
-      const hay = `${c.label} ${c.hint ?? ""}`.toLowerCase();
-      return hay.includes(q);
-    });
+    return filterAndRankCommands(commands, query);
   }, [query, commands]);
 
   const rows = useMemo(

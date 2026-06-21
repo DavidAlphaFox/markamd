@@ -2,49 +2,93 @@ export const DEMO_MARKDOWN = `# welcome to marka.md
 
 ![](/mascot/write.png)
 
-a local markdown editor for the notes you share with ai.
-edit on the left. preview on the right. press **⌘.** for reading mode.
+write markdown, preview it live, and turn notes into clean ai context.
+
+open a folder, star the files you keep using, stage a few notes, then copy one tidy context bundle with token counts. everything stays local.
 
 ---
 
-## diagrams
+## quick tour
+
+- **tabs** keep drafts, docs, and csv files open side by side.
+- **reading mode** gives the preview room to breathe. press **⌘.** / **ctrl+.**.
+- **themes** include neutral, catppuccin, crafted palettes, and ai-inspired colors.
+- **context tray** appears only when files are staged, so the sidebar stays quiet.
+- **export** makes clean PDFs without browser headers.
+
+> tiny workflow: write -> preview -> stage -> copy context -> ask your model.
+
+---
+
+## diagrams that move ideas
 
 mermaid renders live:
 
 \`\`\`mermaid
 flowchart LR
-  Idea --> Draft
-  Draft --> Share
-  Share --> Claude
-  Claude --> Idea
+  Notes[markdown notes] --> Stage[stage files]
+  Stage --> Count[token count]
+  Count --> Bundle[copy context bundle]
+  Bundle --> Model[chatgpt / claude / cursor]
+  Model --> Draft[better draft]
 \`\`\`
 
-plantuml can be previewed on demand:
+plantuml is explicit-load, so remote diagram rendering only happens when you ask for it:
 
 \`\`\`plantuml
-Alice -> Bob: hello
-Bob --> Alice: saved
+@startuml
+Writer -> Marka: open notes
+Marka -> Writer: live preview
+Writer -> Marka: stage files
+Marka -> Writer: ai-ready bundle
+@enduml
 \`\`\`
 
 ---
 
-## code
+## code, tasks, and tiny docs
 
 shiki highlights every code block — colors follow the active theme:
 
 \`\`\`ts
-function copyContext(files: string[]): string {
+type ContextFile = {
+  path: string;
+  tokens: number;
+};
+
+function summarize(files: ContextFile[]): string {
   return files
-    .map((f) => \`<context file="\${f}">\\n...\\n</context>\`)
-    .join("\\n\\n");
+    .map((file) => \`\${file.path}: \${file.tokens} tok\`)
+    .join("\\n");
 }
 \`\`\`
+
+- [x] write the draft
+- [x] preview diagrams
+- [x] stage supporting notes
+- [ ] ship the post
+
+You can also ==mark important phrases==, ~~cut old ideas~~, and keep lists readable.
+
+---
+
+## data notes
+
+Open a \`.csv\` file and marka.md shows a light read-only table preview. Handy for quick content calendars, tiny datasets, and launch checklists.
+
+| channel | idea | status |
+| --- | --- | --- |
+| x | 5k downloads update | draft |
+| reddit | build-in-public notes | later |
+| docs | changelog polish | done |
 
 ---
 
 ![](/mascot/excite.png)
 
-ready when you are. **⌘N** for a fresh buffer, **⌘⇧O** to open a folder.
+ready when you are.
+
+**⌘N** for a fresh buffer. **⌘⇧O** to open a folder. **⌘K** for the command palette.
 
 _marka.md · open source · MIT_
 `;

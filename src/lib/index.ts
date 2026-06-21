@@ -36,6 +36,7 @@ export {
 } from "./writing-display";
 export { CHANGELOG_URL, getWhatsNewToastMessage } from "./release-notes";
 export { buildCommands, type Command, type CommandActions } from "./commands";
+export { filterAndRankCommands } from "./command-search";
 export { estimateTokens, formatTokens } from "./bundle";
 export {
   CSV_PREVIEW_MAX_COLUMNS,

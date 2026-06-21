@@ -37,6 +37,7 @@ export type Command = {
   shortcut?: string;
   icon?: LucideIcon;
   category?: CommandCategory;
+  keywords?: string[];
   action: () => void | Promise<void>;
 };
 
@@ -122,6 +123,7 @@ export function buildCommands(actions: CommandActions, t: Translate = defaultT):
       hint: t("command.recentHint", { dir: dirname(path) }),
       icon: FileText,
       category: "recent",
+      keywords: ["recent", "history", "open", "file"],
       action: () => actions.openRecent(path),
     }),
   );
@@ -135,6 +137,7 @@ export function buildCommands(actions: CommandActions, t: Translate = defaultT):
       shortcut: "⌘⇧O",
       icon: FolderPlus,
       category: "file",
+      keywords: ["folder", "workspace", "library", "notes", "project"],
       action: actions.openFolder,
     },
     {
@@ -144,6 +147,7 @@ export function buildCommands(actions: CommandActions, t: Translate = defaultT):
       shortcut: "⌘O",
       icon: FolderOpen,
       category: "file",
+      keywords: ["file", "markdown", "md", "csv", "open"],
       action: actions.openFile,
     },
     {
@@ -153,6 +157,7 @@ export function buildCommands(actions: CommandActions, t: Translate = defaultT):
       shortcut: "⌘N",
       icon: FilePlus2,
       category: "file",
+      keywords: ["new", "blank", "draft", "untitled"],
       action: actions.newFile,
     },
     {
@@ -162,6 +167,7 @@ export function buildCommands(actions: CommandActions, t: Translate = defaultT):
       shortcut: "⌘S",
       icon: Save,
       category: "file",
+      keywords: ["save", "write", "disk"],
       action: actions.save,
     },
     {
@@ -171,6 +177,7 @@ export function buildCommands(actions: CommandActions, t: Translate = defaultT):
       shortcut: "⌘⌥Z",
       icon: Undo2,
       category: "file",
+      keywords: ["undo", "move", "rename", "file action"],
       action: actions.undoFileOp,
     },
     {
@@ -180,6 +187,7 @@ export function buildCommands(actions: CommandActions, t: Translate = defaultT):
       shortcut: "⌘B",
       icon: actions.sidebarOpen ? PanelLeftClose : PanelLeftOpen,
       category: "view",
+      keywords: ["sidebar", "explorer", "tree", "files"],
       action: actions.toggleSidebar,
     },
     {
@@ -191,6 +199,7 @@ export function buildCommands(actions: CommandActions, t: Translate = defaultT):
       shortcut: "⌘.",
       icon: actions.readingMode ? Minimize2 : BookOpen,
       category: "view",
+      keywords: ["reading", "preview", "proof", "focus"],
       action: actions.toggleReading,
     },
     {
@@ -202,6 +211,7 @@ export function buildCommands(actions: CommandActions, t: Translate = defaultT):
       shortcut: "⌘⇧.",
       icon: actions.editorOnly ? Minimize2 : FileText,
       category: "view",
+      keywords: ["editor", "writing", "focus", "hide preview"],
       action: actions.toggleEditorOnly,
     },
     {
@@ -211,6 +221,7 @@ export function buildCommands(actions: CommandActions, t: Translate = defaultT):
       shortcut: "⌃⌘F",
       icon: Maximize2,
       category: "view",
+      keywords: ["fullscreen", "window", "native"],
       action: actions.toggleFullscreen,
     },
     {
@@ -220,6 +231,7 @@ export function buildCommands(actions: CommandActions, t: Translate = defaultT):
       shortcut: "⌘⇧C",
       icon: Copy,
       category: "share",
+      keywords: ["copy", "markdown", "clipboard", "ai", "chat"],
       action: actions.copyMarkdown,
     },
     {
@@ -235,6 +247,7 @@ export function buildCommands(actions: CommandActions, t: Translate = defaultT):
         : t("app.stageFirst"),
       icon: Files,
       category: "share",
+      keywords: ["context", "bundle", "tokens", "stage", "prompt", "ai"],
       action: actions.copyContextBundle,
     },
     {
@@ -243,6 +256,7 @@ export function buildCommands(actions: CommandActions, t: Translate = defaultT):
       hint: actions.contextCount > 0 ? t("command.clearContextHintReady") : t("command.clearContextHintEmpty"),
       icon: Files,
       category: "share",
+      keywords: ["clear", "context", "bundle", "stage", "staged"],
       action: actions.clearContextBundle,
     },
     {
@@ -252,6 +266,7 @@ export function buildCommands(actions: CommandActions, t: Translate = defaultT):
       shortcut: "⌘P",
       icon: FileDown,
       category: "share",
+      keywords: ["pdf", "print", "export", "document"],
       action: actions.exportToPdf,
     },
     ...THEME_COMMANDS.map(
@@ -261,6 +276,7 @@ export function buildCommands(actions: CommandActions, t: Translate = defaultT):
         hint: theme.hint,
         icon: theme.icon,
         category: "theme",
+        keywords: ["theme", "palette", "color", "appearance", theme.mode, theme.label],
         action: () => setThemeMode(theme.mode),
       }),
     ),
@@ -270,6 +286,7 @@ export function buildCommands(actions: CommandActions, t: Translate = defaultT):
       hint: t("command.transparencyOnHint"),
       icon: Sparkles,
       category: "theme",
+      keywords: ["transparency", "vibrancy", "opacity", "glass"],
       action: () => setTransparency(74),
     },
     {
@@ -278,6 +295,7 @@ export function buildCommands(actions: CommandActions, t: Translate = defaultT):
       hint: t("command.transparencyOffHint"),
       icon: Sparkles,
       category: "theme",
+      keywords: ["transparency", "solid", "opacity", "background"],
       action: () => setTransparency(100),
     },
     {
@@ -287,6 +305,7 @@ export function buildCommands(actions: CommandActions, t: Translate = defaultT):
       shortcut: "⌘/",
       icon: CircleHelp,
       category: "help",
+      keywords: ["help", "how to", "shortcuts", "manual"],
       action: actions.showHelp,
     },
     {
@@ -295,6 +314,7 @@ export function buildCommands(actions: CommandActions, t: Translate = defaultT):
       hint: t("command.demoHint"),
       icon: BookOpen,
       category: "help",
+      keywords: ["demo", "welcome", "sample", "onboarding doc"],
       action: actions.loadDemo,
     },
     {
@@ -303,6 +323,7 @@ export function buildCommands(actions: CommandActions, t: Translate = defaultT):
       hint: t("command.tutorialHint"),
       icon: Sparkles,
       category: "help",
+      keywords: ["tutorial", "welcome", "quickstart", "onboarding"],
       action: actions.showWelcome,
     },
     {
@@ -311,6 +332,7 @@ export function buildCommands(actions: CommandActions, t: Translate = defaultT):
       hint: t("command.checkUpdatesHint"),
       icon: Download,
       category: "help",
+      keywords: ["update", "download", "version", "release"],
       action: actions.checkForUpdates,
     },
     {
@@ -319,6 +341,7 @@ export function buildCommands(actions: CommandActions, t: Translate = defaultT):
       hint: t("command.aboutHint"),
       icon: Info,
       category: "help",
+      keywords: ["about", "version", "license", "github"],
       action: actions.showAbout,
     },
   ];

@@ -25,44 +25,53 @@ const SLIDES: Slide[] = [
     title: "welcome to marka.md",
     body: (
       <>
-        a local markdown editor built around one loop:{" "}
-        <strong>collect notes → write → share with ai</strong>. nothing leaves your machine until you copy.
+        a local markdown editor for one loop:{" "}
+        <strong>collect notes → write → stage context → share</strong>. nothing leaves your machine until you copy.
       </>
     ),
   },
   {
     mascot: notebookUrl,
-    title: "your context library",
+    title: "open your workspace",
     body: (
       <>
-        press <Shortcut keys="⌘+⇧+O" /> to load a folder of <code>.md</code> notes and <code>.csv</code> data. the sidebar becomes your library — tap the search icon to search across the tree.
+        press <Shortcut keys="⌘+⇧+O" /> to load a folder. search the tree, star important notes, and keep drafts open in tabs.
       </>
     ),
   },
   {
     mascot: penUrl,
-    title: "write side by side",
+    title: "write with live preview",
     body: (
       <>
-        type on the left, watch it render on the right. code blocks + mermaid diagrams — all live. <Shortcut keys="⌘+S" /> to save when ready.
+        type on the left, preview on the right. markdown, code, mermaid, plantuml, tasks, and csv previews all stay close to the draft.
       </>
     ),
   },
   {
     mascot: inspectUrl,
-    title: "read, then share",
+    title: "stage context",
     body: (
       <>
-        <Shortcut keys="⌘+." /> flips to calm reading mode for proofing. use the top action row to copy markdown, export pdf, or open files without hunting through menus.
+        click the context buttons beside sidebar files. the tray shows file count + tokens, then copies one clean bundle for ai chat.
+      </>
+    ),
+  },
+  {
+    mascot: inspectUrl,
+    title: "read and share",
+    body: (
+      <>
+        <Shortcut keys="⌘+." /> opens reading mode. copy markdown with <Shortcut keys="⌘+⇧+C" /> or export a clean pdf with <Shortcut keys="⌘+P" />.
       </>
     ),
   },
   {
     mascot: exciteUrl,
-    title: "you're set",
+    title: "make it yours",
     body: (
       <>
-        <Shortcut keys="⌘+K" /> for all commands. <Shortcut keys="⌘+/" /> for help. happy writing.
+        use <Shortcut keys="⌘+K" /> for commands, themes, language, updates, help, and the demo doc. happy writing.
       </>
     ),
   },

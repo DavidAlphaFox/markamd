@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Copy, FilePlus, FolderPlus, Search, Trash2, X } from "lucide-react";
+import { Copy, FolderPlus, Search, Trash2, X } from "lucide-react";
 import { Button, Icon } from "@/components/primitives";
 import { startWindowDrag, useI18n, type FileEntry } from "@/lib";
 import emptyTowerUrl from "@/assets/mascot/empty-m.png";
@@ -7,7 +7,6 @@ import { type NewEntry } from "./file-tree";
 import { SearchResults } from "./sidebar-search";
 import { RootFolder } from "./root-folder";
 import { Favorites } from "./favorites";
-import { PinnedFiles } from "./pinned-files";
 
 type SidebarProps = {
   open: boolean;
@@ -29,10 +28,6 @@ type SidebarProps = {
   onReorderFavorites?: (from: number, to: number) => void;
   onCopyContext?: () => void;
   onClearContext?: () => void;
-  pinnedFiles?: readonly string[];
-  onAddFile?: () => void;
-  onRemovePinnedFile?: (path: string) => void;
-  onAddPinnedFile?: (path: string) => void;
   editingPath?: string | null;
   onSubmitRename?: (src: string, newName: string) => void;
   onCancelEdit?: () => void;
@@ -64,10 +59,6 @@ export function Sidebar({
   onReorderFavorites,
   onCopyContext,
   onClearContext,
-  pinnedFiles = [],
-  onAddFile,
-  onRemovePinnedFile,
-  onAddPinnedFile,
   editingPath,
   onSubmitRename,
   onCancelEdit,
@@ -176,12 +167,6 @@ export function Sidebar({
               />
             ) : null}
             <Button
-              data-tooltip={t("sidebar.addFile")}
-              aria-label={t("sidebar.addFile")}
-              onClick={onAddFile}
-              icon={<Icon icon={FilePlus} size={13} strokeWidth={1.5} />}
-            />
-            <Button
               data-tooltip={t("sidebar.addFolder")}
               aria-label={t("sidebar.addFolder")}
               onClick={onAddFolder}
@@ -277,14 +262,6 @@ export function Sidebar({
                   onReorder={(from, to) => onReorderFavorites?.(from, to)}
                   onContextMenu={onContextMenu}
                 />
-                <PinnedFiles
-                  pinnedFiles={pinnedFiles}
-                  activePath={activePath}
-                  onSelect={onSelectFile}
-                  onRemove={(p) => onRemovePinnedFile?.(p)}
-                  onAdd={(p) => onAddPinnedFile?.(p)}
-                  onContextMenu={onContextMenu}
-                />
                 {folders.map((folder) => (
                   <RootFolder
                     key={folder}
@@ -323,15 +300,7 @@ export function Sidebar({
                 onReorder={(from, to) => onReorderFavorites?.(from, to)}
                 onContextMenu={onContextMenu}
               />
-              <PinnedFiles
-                pinnedFiles={pinnedFiles}
-                activePath={activePath}
-                onSelect={onSelectFile}
-                onRemove={(p) => onRemovePinnedFile?.(p)}
-                onAdd={(p) => onAddPinnedFile?.(p)}
-                onContextMenu={onContextMenu}
-              />
-              {pinnedFiles.length === 0 && favorites.length === 0 ? (
+              {favorites.length === 0 ? (
                 <button type="button" className="mdv-sidebar__empty" onClick={onAddFolder}>
                   <img
                     src={emptyTowerUrl}

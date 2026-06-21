@@ -147,10 +147,6 @@ export function App() {
     STORAGE_KEYS.favorites,
     [],
   );
-  const [pinnedFiles, setPinnedFiles] = usePersistedState<string[]>(
-    STORAGE_KEYS.pinnedFiles,
-    [],
-  );
   const didHydrateFoldersRef = useRef(false);
 
   // migrate the legacy single-folder session into the multi-folder list,
@@ -192,19 +188,6 @@ export function App() {
       prev.includes(path) ? prev.filter((p) => p !== path) : [...prev, path],
     );
   }, [setFavorites]);
-
-  const addPinnedFile = useCallback((path: string) => {
-    setPinnedFiles((prev) => prev.includes(path) ? prev : [...prev, path]);
-  }, [setPinnedFiles]);
-
-  const removePinnedFile = useCallback((path: string) => {
-    setPinnedFiles((prev) => prev.filter((p) => p !== path));
-  }, [setPinnedFiles]);
-
-  const handleAddFile = useCallback(async () => {
-    const file = await pickMarkdownFile();
-    if (file) addPinnedFile(file);
-  }, [pickMarkdownFile, addPinnedFile]);
 
   const reorderFavorites = useCallback((from: number, to: number) => {
     setFavorites((prev) => {
@@ -462,8 +445,8 @@ export function App() {
 
   const editorViewRef = useRef<EditorView | null>(null);
 
-  // line-anchor editor <-> preview scroll sync; rebinds when active file changes
-  useSyncScroll({ viewRef: editorViewRef, rebindKey: activePath ?? "untitled" });
+  // proportional editor <-> preview scroll sync; rebinds when active file changes
+  useSyncScroll({ rebindKey: activePath ?? "untitled" });
   useScrollMemory(activePath);
   useSelectionSyncText(editorViewRef, activePath ?? "untitled");
 
@@ -584,7 +567,6 @@ export function App() {
     void listen<string>("marka:open-file", (event) => {
       const path = event.payload;
       if (typeof path === "string" && path.length > 0) {
-        addPinnedFile(path);
         void loadFile(path);
       }
     }).then((un) => {
@@ -593,7 +575,6 @@ export function App() {
         .then((paths) => {
           const latest = paths[paths.length - 1];
           if (latest) {
-            addPinnedFile(latest);
             void loadFile(latest);
           }
         })
@@ -604,7 +585,7 @@ export function App() {
     return () => {
       unlisten?.();
     };
-  }, [addPinnedFile, loadFile]);
+  }, [loadFile]);
 
   // OS drop via Tauri events (dragDropEnabled: true).
   // Tauri intercepts file drags before the browser sees them, giving us real file paths.
@@ -614,8 +595,9 @@ export function App() {
     let unlistenDrop: (() => void) | undefined;
     let unlistenLeave: (() => void) | undefined;
 
-    void listen<DragPayload>("tauri://drag-enter", () => {
-      setDragActive(true);
+    void listen<DragPayload>("tauri://drag-enter", (event) => {
+      const paths = event.payload.paths ?? [];
+      setDragActive(paths.some((p) => isSupportedTextPath(p)));
     }).then((ul) => { unlistenEnter = ul; });
 
     void listen<DragPayload>("tauri://drag-drop", (event) => {
@@ -623,7 +605,6 @@ export function App() {
       const paths = event.payload.paths ?? [];
       const firstSupported = paths.find((p) => isSupportedTextPath(p));
       if (firstSupported) {
-        addPinnedFile(firstSupported);
         void loadFile(firstSupported);
       } else if (paths.length > 0) {
         setLoadError({ message: t("app.dropMarkdownOnly") });
@@ -639,7 +620,7 @@ export function App() {
       unlistenDrop?.();
       unlistenLeave?.();
     };
-  }, [addPinnedFile, loadFile, setLoadError, t]);
+  }, [loadFile, setLoadError, t]);
 
   const shortcuts = useMemo(
     () => ({
@@ -895,10 +876,6 @@ export function App() {
               onReorderFavorites={reorderFavorites}
               onCopyContext={() => void copyContextBundle()}
               onClearContext={clearContextBundle}
-              pinnedFiles={pinnedFiles}
-              onAddFile={() => void handleAddFile()}
-              onRemovePinnedFile={removePinnedFile}
-              onAddPinnedFile={addPinnedFile}
               editingPath={editingPath}
               onSubmitRename={handleSubmitRename}
               onCancelEdit={() => setEditingPath(null)}
