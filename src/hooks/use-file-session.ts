@@ -135,8 +135,8 @@ export function useFileSession({ onLoadError }: UseFileSessionArgs = {}): UseFil
       tab.id === activeTabId
         ? {
             ...tab,
-            path: activePathRef.current,
-            title: titleForPath(activePathRef.current),
+            path: tab.path ? activePathRef.current : null,
+            title: titleForPath(tab.path ? activePathRef.current : null),
             source: sourceRef.current,
             savedContent: savedRef.current,
           }
