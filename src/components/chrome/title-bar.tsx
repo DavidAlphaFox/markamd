@@ -1,9 +1,14 @@
-import { Check, Copy, FileDown, Minimize2 } from "lucide-react";
+import { Check, Copy, FileDown, Minimize2, RotateCcw, ZoomIn, ZoomOut } from "lucide-react";
 import { Button, Icon } from "@/components/primitives";
 import {
+  DEFAULT_WRITING_DISPLAY,
+  READING_FONT_SIZE_OPTIONS,
   shortcutLabel,
   startWindowDrag,
   useI18n,
+  type ProseFontFamily,
+  type ReadingFontSize,
+  type ReadingWidth,
   type WritingDisplay,
   type WritingFontSize,
   type WritingLineHeight,
@@ -24,6 +29,9 @@ type TitleBarProps = {
   writingDisplay: WritingDisplay;
   onWritingFontSizeChange: (value: WritingFontSize) => void;
   onWritingLineHeightChange: (value: WritingLineHeight) => void;
+  onReadingFontSizeChange: (value: ReadingFontSize) => void;
+  onReadingWidthChange: (value: ReadingWidth) => void;
+  onProseFontFamilyChange: (value: ProseFontFamily) => void;
   onResetWritingDisplay: () => void;
 };
 
@@ -41,9 +49,27 @@ export function TitleBar({
   writingDisplay,
   onWritingFontSizeChange,
   onWritingLineHeightChange,
+  onReadingFontSizeChange,
+  onReadingWidthChange,
+  onProseFontFamilyChange,
   onResetWritingDisplay,
 }: TitleBarProps) {
   const { t } = useI18n();
+  const readingFontIndex = Math.max(
+    0,
+    READING_FONT_SIZE_OPTIONS.indexOf(writingDisplay.readingFontSize),
+  );
+  const defaultReadingFontIndex = READING_FONT_SIZE_OPTIONS.indexOf(
+    DEFAULT_WRITING_DISPLAY.readingFontSize,
+  );
+  const canZoomOut = readingFontIndex > 0;
+  const canZoomIn = readingFontIndex < READING_FONT_SIZE_OPTIONS.length - 1;
+  const canResetZoom = readingFontIndex !== defaultReadingFontIndex;
+
+  const setReadingFontAt = (index: number) => {
+    const next = READING_FONT_SIZE_OPTIONS[index];
+    if (next) onReadingFontSizeChange(next);
+  };
 
   return (
     <header className="mdv-titlebar" data-tauri-drag-region onMouseDown={startWindowDrag}>
@@ -70,12 +96,40 @@ export function TitleBar({
 
       <div className="mdv-titlebar__actions" data-tauri-drag-region>
         {readingMode ? (
+          <div className="mdv-titlebar__zoom" aria-label={t("title.readingZoom")}>
+            <Button
+              data-tooltip={t("title.readingZoomOut")}
+              aria-label={t("title.readingZoomOut")}
+              disabled={!canZoomOut}
+              onClick={() => setReadingFontAt(readingFontIndex - 1)}
+              icon={<Icon icon={ZoomOut} size={13} strokeWidth={1.6} />}
+            />
+            <Button
+              data-tooltip={t("title.resetReadingZoom")}
+              aria-label={t("title.resetReadingZoom")}
+              disabled={!canResetZoom}
+              onClick={() => setReadingFontAt(defaultReadingFontIndex)}
+              icon={<Icon icon={RotateCcw} size={13} strokeWidth={1.6} />}
+            />
+            <Button
+              data-tooltip={t("title.readingZoomIn")}
+              aria-label={t("title.readingZoomIn")}
+              disabled={!canZoomIn}
+              onClick={() => setReadingFontAt(readingFontIndex + 1)}
+              icon={<Icon icon={ZoomIn} size={13} strokeWidth={1.6} />}
+            />
+          </div>
+        ) : null}
+        {readingMode ? (
           <ThemeButton
             vimOn={vimOn}
             onToggleVim={onToggleVim}
             writingDisplay={writingDisplay}
             onWritingFontSizeChange={onWritingFontSizeChange}
             onWritingLineHeightChange={onWritingLineHeightChange}
+            onReadingFontSizeChange={onReadingFontSizeChange}
+            onReadingWidthChange={onReadingWidthChange}
+            onProseFontFamilyChange={onProseFontFamilyChange}
             onResetWritingDisplay={onResetWritingDisplay}
           />
         ) : null}
