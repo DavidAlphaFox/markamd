@@ -1,7 +1,7 @@
 export const CHANGELOG_URL = "https://markamd.vercel.app/changelog";
 
 const WHATS_NEW_TOAST_BY_MINOR: Record<string, string> = {
-  "1.5": "Preview scrolling is smooth again, context staging stays clean, and the workspace polish continues",
+  "1.5": "Reading controls, prose fonts, theme polish, and hidden-toolbar fixes are here",
 };
 
 export function getWhatsNewToastMessage(version: string): string {
