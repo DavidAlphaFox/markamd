@@ -17,6 +17,16 @@ export function plantUmlUrl(source: string): string {
   return `${PLANTUML_SVG_BASE}/${encode(source)}`;
 }
 
+export function renderPlantUmlInHtml(html: string): string {
+  if (!html.includes("mdv-plantuml")) return html;
+
+  return html.replace(
+    /<figure class="mdv-plantuml" data-src="([^"]+)"><figcaption>plantuml<\/figcaption><pre><code>[\s\S]*?<\/code><\/pre><\/figure>/g,
+    (_match, src: string) =>
+      `<figure class="mdv-plantuml is-rendered" data-src="${src}"><figcaption>plantuml</figcaption><img class="mdv-plantuml__img" src="${src}" alt="PlantUML diagram" referrerpolicy="no-referrer"></figure>`,
+  );
+}
+
 export function decoratePlantUmlBlocks(
   root: HTMLElement,
   onOpen?: (viewer: PlantUmlViewerSource) => void,

@@ -3,6 +3,7 @@ import { openPath } from "@tauri-apps/plugin-opener";
 import { basename, writeMarkdown } from "./files";
 import { renderMarkdown } from "./markdown";
 import { renderMermaidInHtml } from "./mermaid";
+import { renderPlantUmlInHtml } from "./plantuml";
 
 // Tauri 2's WKWebView no-ops window.print(). We render a standalone html doc,
 // write to OS temp, then open in the default browser. Browser auto-prints on
@@ -89,7 +90,7 @@ export const PRINT_STYLES = `
     break-inside: avoid;
     page-break-inside: avoid;
   }
-  blockquote, table, .mdv-mermaid {
+  blockquote, table, .mdv-mermaid, .mdv-plantuml {
     break-inside: avoid;
     page-break-inside: avoid;
   }
@@ -120,6 +121,9 @@ export const PRINT_STYLES = `
   th { background: rgba(0, 0, 0, 0.03); font-weight: 600; }
   .mdv-mermaid { background: transparent; border: 0; padding: 0; text-align: center; }
   .mdv-mermaid svg { max-width: 100%; height: auto; }
+  .mdv-plantuml { background: transparent; border: 0; padding: 0; text-align: center; }
+  .mdv-plantuml figcaption { display: none; }
+  .mdv-plantuml__img { display: block; max-width: 100%; height: auto; margin: 0 auto; }
   .mdv-copy, .mdv-codeblock > .mdv-copy { display: none !important; }
   @page { margin: 0; size: auto; }
   @media print {
@@ -160,7 +164,8 @@ export async function exportPreviewToPdf({ source, activePath, documentName }: E
   // white paper regardless of the user's current app theme. Lazy-loads the
   // latte shiki theme on first non-latte export (~150-300ms one-time tax).
   const renderedHtml = await renderMarkdown(source, "latte");
-  const latteHtml = await renderMermaidInHtml(renderedHtml, "default");
+  const diagramHtml = renderPlantUmlInHtml(renderedHtml);
+  const latteHtml = await renderMermaidInHtml(diagramHtml, "default");
 
   const html = `<!doctype html>
 <html lang="en">
